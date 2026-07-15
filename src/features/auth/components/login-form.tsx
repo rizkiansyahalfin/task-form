@@ -20,6 +20,8 @@ export function LoginForm() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
+    // Cast to any is used temporarily to bypass strict typing differences
+    // between Zod v4 prerelease/draft schema formats and react-hook-form's zodResolver.
     resolver: zodResolver(loginSchema as any),
   });
 

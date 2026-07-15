@@ -4,10 +4,12 @@ import { successResponse, withErrorHandler } from "@/lib/api-response";
 import { enforceRateLimit } from "@/lib/rate-limiter";
 import { uploadRequestSchema } from "@/schemas";
 import { storage } from "@/lib/storage";
+import { requireAuth } from "@/server/auth";
 
 export async function POST(request: NextRequest) {
   return withErrorHandler(async () => {
-    enforceRateLimit(`upload:${request.headers.get("x-forwarded-for") ?? "local"}`);
+    const user = await requireAuth();
+    enforceRateLimit(`upload:${user.id}`);
 
     const body = await request.json();
     const data = uploadRequestSchema.parse(body);

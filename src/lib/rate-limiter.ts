@@ -6,6 +6,14 @@ interface RateLimitEntry {
   resetAt: number;
 }
 
+/**
+ * WARNING: In-memory rate limiting store.
+ * In a serverless/multi-instance environment (like Vercel, multiple container instances, or multi-process PM2 clusters),
+ * this memory map is NOT shared between instances. Rate limits will only apply per instance, making it a best-effort defense.
+ * 
+ * For enterprise-grade scaling or strict rate-limiting, replace this with a centralized store like Redis/Upstash
+ * or Vercel KV.
+ */
 const store = new Map<string, RateLimitEntry>();
 
 function cleanupExpired(): void {

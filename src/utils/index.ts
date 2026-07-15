@@ -21,7 +21,7 @@ export function determineSubmissionStatus(
   allowLate: boolean,
 ): "SUBMITTED" | "LATE" {
   if (deadline && new Date() > deadline) {
-    return allowLate ? "LATE" : "LATE";
+    return "LATE";
   }
   return "SUBMITTED";
 }
@@ -44,8 +44,4 @@ export function formatDate(date: Date | string | null): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(date));
-}
-
-export function cn(...classes: (string | boolean | undefined | null)[]): string {
-  return classes.filter(Boolean).join(" ");
 }

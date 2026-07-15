@@ -9,8 +9,20 @@ interface RouteParams {
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const { fileKey } = await params;
+
+    // Prevent path traversal segments
+    if (fileKey.some((segment) => segment === ".." || segment === ".")) {
+      return NextResponse.json({ success: false, message: "Invalid file path" }, { status: 400 });
+    }
+
     const relativePath = fileKey.join("/");
-    const filePath = path.join(process.cwd(), "public", relativePath);
+    const baseDir = path.join(process.cwd(), "public");
+    const filePath = path.resolve(baseDir, relativePath);
+
+    // Ensure the resolved path remains inside the public directory
+    if (!filePath.startsWith(baseDir)) {
+      return NextResponse.json({ success: false, message: "Access denied" }, { status: 403 });
+    }
 
     // Read file contents
     const buffer = await fs.readFile(filePath);

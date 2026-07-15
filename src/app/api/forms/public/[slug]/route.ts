@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 
 import { successResponse, withErrorHandler } from "@/lib/api-response";
 import { enforceRateLimit } from "@/lib/rate-limiter";
-import { requireAuth } from "@/server/auth";
 import { formService } from "@/services/form.service";
 
 interface RouteParams {

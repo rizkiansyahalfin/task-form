@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { AUTH_ROUTES, MENTOR_ROUTES } from "@/constants";
+import { AUTH_ROUTES } from "@/constants";
 import { applySecurityHeaders } from "@/lib/security-headers";
 
 const protectedPrefixes = ["/dashboard", "/forms", "/submissions", "/settings"];
