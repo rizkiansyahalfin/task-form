@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import {
   FileText,
   Calendar,
@@ -26,6 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { usePublicForm, useSubmitForm } from "@/hooks/use-forms";
+import { useSession } from "@/lib/auth-client";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -37,9 +38,17 @@ export default function PublicFormPage({ params }: PageProps) {
   // Queries
   const { data: form, isLoading, error } = usePublicForm(slug);
   const submitFormMutation = useSubmitForm(slug);
+  const { data: session } = useSession();
 
   // Form State
   const [email, setEmail] = useState("");
+
+  // Pre-fill email from session if logged in
+  useEffect(() => {
+    if (session?.user?.email) {
+      setEmail(session.user.email);
+    }
+  }, [session]);
   const [answers, setAnswers] = useState<Record<string, { value?: string; values?: string[] }>>({});
   const [files, setFiles] = useState<Record<string, { fileKey: string; fileName: string; mimeType: string; fileSize: number }>>({});
   
@@ -184,7 +193,7 @@ export default function PublicFormPage({ params }: PageProps) {
       }));
 
       const payload = {
-        email: email || null,
+        email: email || session?.user?.email || null,
         answers: formattedAnswers,
         files: formattedFiles
       };

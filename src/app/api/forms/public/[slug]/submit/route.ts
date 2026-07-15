@@ -18,6 +18,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const body = await request.json();
     const data = submitFormSchema.parse(body);
 
+    const { getSession } = await import("@/server/auth");
+    const session = await getSession();
+    if (session?.user?.email) {
+      data.email = session.user.email;
+    }
+
     const submission = await submissionService.submitForm(slug, data, {
       ipAddress: ip,
       userAgent: request.headers.get("user-agent") ?? undefined,
