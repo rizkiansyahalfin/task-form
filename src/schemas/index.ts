@@ -37,6 +37,7 @@ export const formFieldOptionSchema = z.object({
 });
 
 export const formFieldSchema = z.object({
+  id: z.string().optional(),
   type: z.enum(FIELD_TYPES),
   label: z.string().min(1, "Label is required"),
   description: z.string().optional(),

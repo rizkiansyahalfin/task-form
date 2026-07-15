@@ -130,10 +130,87 @@ export class FormRepository {
     const { fields, ...formData } = data;
 
     if (fields) {
-      await prisma.formField.updateMany({
-        where: { formId: id },
-        data: { deletedAt: new Date() },
+      // Find all existing active fields for this form
+      const existingFields = await prisma.formField.findMany({
+        where: { formId: id, deletedAt: null },
+        select: { id: true },
       });
+      const existingFieldIds = new Set(existingFields.map((f) => f.id));
+
+      const payloadFieldIds = new Set(
+        fields.map((f) => f.id).filter(Boolean) as string[],
+      );
+
+      // Soft-delete fields that are in database but NOT in payload
+      const fieldsToSoftDelete = [...existingFieldIds].filter(
+        (fieldId) => !payloadFieldIds.has(fieldId),
+      );
+
+      if (fieldsToSoftDelete.length > 0) {
+        await prisma.formField.updateMany({
+          where: { id: { in: fieldsToSoftDelete } },
+          data: { deletedAt: new Date() },
+        });
+      }
+
+      // Upsert fields from payload
+      for (const field of fields) {
+        if (field.id) {
+          // Clean up old options first
+          await prisma.formFieldOption.deleteMany({
+            where: { fieldId: field.id },
+          });
+
+          // Update the field
+          await prisma.formField.update({
+            where: { id: field.id },
+            data: {
+              type: field.type,
+              label: field.label,
+              description: field.description || null,
+              placeholder: field.placeholder || null,
+              required: field.required ?? false,
+              order: field.order,
+              validation: field.validation as Prisma.InputJsonValue,
+              defaultValue: field.defaultValue || null,
+              options: field.options?.length
+                ? {
+                    create: field.options.map((opt) => ({
+                      label: opt.label,
+                      value: opt.value,
+                      order: opt.order,
+                    })),
+                  }
+                : undefined,
+              deletedAt: null,
+            },
+          });
+        } else {
+          // Create new field
+          await prisma.formField.create({
+            data: {
+              formId: id,
+              type: field.type,
+              label: field.label,
+              description: field.description || null,
+              placeholder: field.placeholder || null,
+              required: field.required ?? false,
+              order: field.order,
+              validation: field.validation as Prisma.InputJsonValue,
+              defaultValue: field.defaultValue || null,
+              options: field.options?.length
+                ? {
+                    create: field.options.map((opt) => ({
+                      label: opt.label,
+                      value: opt.value,
+                      order: opt.order,
+                    })),
+                  }
+                : undefined,
+            },
+          });
+        }
+      }
     }
 
     return prisma.form.update({
@@ -146,23 +223,6 @@ export class FormRepository {
               ? new Date(formData.deadline)
               : null
             : undefined,
-        fields: fields?.length
-          ? {
-              create: fields.map((field: CreateFormFieldInput) => ({
-                type: field.type,
-                label: field.label,
-                description: field.description,
-                placeholder: field.placeholder,
-                required: field.required ?? false,
-                order: field.order,
-                validation: field.validation as Prisma.InputJsonValue,
-                defaultValue: field.defaultValue,
-                options: field.options?.length
-                  ? { create: field.options }
-                  : undefined,
-              })),
-            }
-          : undefined,
       },
       include: formInclude,
     });

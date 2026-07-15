@@ -139,6 +139,7 @@ export interface CreateFormInput {
 }
 
 export interface CreateFormFieldInput {
+  id?: string;
   type: FieldType;
   label: string;
   description?: string;

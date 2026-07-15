@@ -92,6 +92,7 @@ export default function FormDetailPage({ params }: PageProps) {
         successMessage: form.successMessage,
         customMessage: form.customMessage,
         fields: form.fields.map((f) => ({
+          id: f.id,
           type: f.type,
           label: f.label,
           description: f.description ?? undefined,
