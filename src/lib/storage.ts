@@ -6,7 +6,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-import { ALLOWED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from "@/constants";
+import { ALLOWED_FILE_TYPES, APP_URL, MAX_FILE_SIZE_BYTES } from "@/constants";
 import { ValidationError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import type { SignedUploadUrl } from "@/types";
@@ -120,7 +120,7 @@ class LocalStorageAdapter implements StorageAdapter {
     validateFile(mimeType, fileSize);
     const sanitized = sanitizeFileName(fileName);
     const fileKey = `${folder}/${Date.now()}-${sanitized}`;
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const baseUrl = APP_URL;
     return {
       uploadUrl: `${baseUrl}/api/uploads/local`,
       fileKey,
@@ -129,7 +129,7 @@ class LocalStorageAdapter implements StorageAdapter {
   }
 
   async getSignedDownloadUrl(fileKey: string): Promise<string> {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const baseUrl = APP_URL;
     return `${baseUrl}/api/uploads/${encodeURIComponent(fileKey)}`;
   }
 
@@ -138,7 +138,7 @@ class LocalStorageAdapter implements StorageAdapter {
   }
 
   getPublicUrl(fileKey: string): string {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const baseUrl = APP_URL;
     return `${baseUrl}/api/uploads/${encodeURIComponent(fileKey)}`;
   }
 }
