@@ -12,7 +12,8 @@ import {
   Calendar,
   AlertCircle,
   ArrowRight,
-  ClipboardList
+  ClipboardList,
+  Edit
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -128,7 +129,9 @@ export default function FormsPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-1">
-                      <CardTitle className="line-clamp-1">{form.title}</CardTitle>
+                      <CardTitle className="line-clamp-1 hover:underline">
+                        <Link href={`/forms/${form.id}`}>{form.title}</Link>
+                      </CardTitle>
                       <CardDescription className="line-clamp-2">
                         {form.description || "No description provided."}
                       </CardDescription>
@@ -176,6 +179,11 @@ export default function FormsPage() {
                   </div>
 
                   <div className="flex items-center justify-between gap-2 pt-2">
+                    <Link href={`/forms/${form.id}`} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full gap-1 justify-center">
+                        <Edit className="h-3.5 w-3.5" /> Edit
+                      </Button>
+                    </Link>
                     {form.status === "DRAFT" ? (
                       <Button
                         size="sm"
