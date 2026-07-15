@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   FileText,
@@ -32,7 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { useForms } from "@/hooks/use-forms";
 import { useSubmissions, useSubmission, useUpdateSubmissionStatus, useDeleteSubmission } from "@/hooks/use-submissions";
 
-export default function SubmissionsPage() {
+function SubmissionsContent() {
   const searchParams = useSearchParams();
   const initialFormId = searchParams.get("formId") || "all";
 
@@ -108,7 +108,7 @@ export default function SubmissionsPage() {
             <Select
               value={formId}
               onValueChange={(val) => {
-                setFormId(val);
+                setFormId(val || "all");
                 setPage(1);
               }}
             >
@@ -310,5 +310,22 @@ export default function SubmissionsPage() {
         </Dialog>
       </div>
     </MentorLayout>
+  );
+}
+
+export default function SubmissionsPage() {
+  return (
+    <Suspense
+      fallback={
+        <MentorLayout>
+          <div className="space-y-6">
+            <Skeleton className="h-10 w-[200px]" />
+            <Skeleton className="h-40 w-full" />
+          </div>
+        </MentorLayout>
+      }
+    >
+      <SubmissionsContent />
+    </Suspense>
   );
 }

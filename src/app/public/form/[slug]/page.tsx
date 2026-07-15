@@ -418,7 +418,7 @@ export default function PublicFormPage({ params }: PageProps) {
                   {field.type === "DROPDOWN" && (
                     <Select
                       value={answers[field.id]?.value || ""}
-                      onValueChange={(val) => handleInputChange(field.id, val)}
+                      onValueChange={(val) => handleInputChange(field.id, val || "")}
                       disabled={isClosed}
                     >
                       <SelectTrigger className="w-full">

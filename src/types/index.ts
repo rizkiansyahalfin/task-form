@@ -127,9 +127,9 @@ export interface SignedUploadUrl {
 export interface CreateFormInput {
   title: string;
   description?: string;
-  deadline?: string;
+  deadline?: string | null;
   allowLate?: boolean;
-  maxSubmissions?: number;
+  maxSubmissions?: number | null;
   allowEdit?: boolean;
   collectEmail?: boolean;
   successTitle?: string;
