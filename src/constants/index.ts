@@ -1,7 +1,11 @@
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "TaskForm";
 export const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
-  (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "http://localhost:3000");
+  (process.env.NEXT_PUBLIC_VERCEL_URL
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+    : process.env.NODE_ENV === "production"
+      ? "https://task-form-omega.vercel.app"
+      : "http://localhost:3000");
 
 export const MAX_FILE_SIZE_MB = Number(process.env.MAX_FILE_SIZE_MB ?? 10);
 export const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
