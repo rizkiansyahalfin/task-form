@@ -10,10 +10,9 @@ import {
   CheckCircle,
   Eye,
   Calendar,
-  AlertCircle,
-  ArrowRight,
   ClipboardList,
-  Edit
+  Edit,
+  XCircle
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -24,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useForms, usePublishForm, useDeleteForm } from "@/hooks/use-forms";
+import { useForms, usePublishForm, useUnpublishForm, useDeleteForm } from "@/hooks/use-forms";
 import { Badge } from "@/components/ui/badge";
 
 export default function FormsPage() {
@@ -33,6 +32,7 @@ export default function FormsPage() {
 
   const { data: formsData, isLoading, refetch } = useForms({ page, search });
   const publishFormMutation = usePublishForm();
+  const unpublishFormMutation = useUnpublishForm();
   const deleteFormMutation = useDeleteForm();
 
   const forms = formsData?.forms || [];
@@ -45,6 +45,17 @@ export default function FormsPage() {
       refetch();
     } catch {
       toast.error("Failed to publish form");
+    }
+  };
+
+  const handleUnpublish = async (id: string) => {
+    if (!confirm("Are you sure you want to unpublish this form? It will be reverted to draft status.")) return;
+    try {
+      await unpublishFormMutation.mutateAsync(id);
+      toast.success("Form unpublished successfully!");
+      refetch();
+    } catch {
+      toast.error("Failed to unpublish form");
     }
   };
 
@@ -194,8 +205,14 @@ export default function FormsPage() {
                         <CheckCircle className="h-3.5 w-3.5" /> Publish
                       </Button>
                     ) : (
-                      <Button variant="secondary" size="sm" className="flex-1" disabled>
-                        Published
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="flex-1 gap-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/20"
+                        onClick={() => handleUnpublish(form.id)}
+                        disabled={unpublishFormMutation.isPending}
+                      >
+                        <XCircle className="h-3.5 w-3.5" /> Unpublish
                       </Button>
                     )}
                     <Button

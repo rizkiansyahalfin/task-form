@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -10,13 +10,11 @@ import {
   Settings,
   ListPlus,
   Save,
-  Calendar,
   ArrowLeft,
   Loader2,
   ExternalLink,
-  Copy,
-  Archive,
-  CheckCircle
+  CheckCircle,
+  XCircle
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -27,11 +25,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useFormBuilderStore } from "@/hooks/use-form-builder-store";
-import { useForm, useUpdateForm, usePublishForm, useDeleteForm } from "@/hooks/use-forms";
+import { useForm, useUpdateForm, usePublishForm, useUnpublishForm, useDeleteForm } from "@/hooks/use-forms";
 import { FIELD_TYPES } from "@/constants";
 import Link from "next/link";
 
@@ -45,8 +43,9 @@ export default function FormDetailPage({ params }: PageProps) {
   const { data: form, isLoading, error } = useForm(id);
   const updateFormMutation = useUpdateForm(id);
   const publishFormMutation = usePublishForm();
+  const unpublishFormMutation = useUnpublishForm();
   const deleteFormMutation = useDeleteForm();
-  const [isInitialized, setIsInitialized] = useState(false);
+  const isInitializedRef = useRef(false);
 
   const {
     title,
@@ -66,11 +65,9 @@ export default function FormDetailPage({ params }: PageProps) {
     setDeadline,
     setAllowLate,
     setMaxSubmissions,
-    setAllowEdit,
     setCollectEmail,
     setSuccessTitle,
     setSuccessMessage,
-    setCustomMessage,
     addField,
     updateField,
     removeField,
@@ -82,7 +79,7 @@ export default function FormDetailPage({ params }: PageProps) {
 
   // Load form data into the builder store once
   useEffect(() => {
-    if (form && !isInitialized) {
+    if (form && !isInitializedRef.current) {
       loadForm({
         title: form.title,
         description: form.description,
@@ -110,9 +107,9 @@ export default function FormDetailPage({ params }: PageProps) {
           })),
         })),
       });
-      setIsInitialized(true);
+      isInitializedRef.current = true;
     }
-  }, [form, isInitialized, loadForm]);
+  }, [form, loadForm]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -162,8 +159,9 @@ export default function FormDetailPage({ params }: PageProps) {
 
       await updateFormMutation.mutateAsync(payload);
       toast.success("Form updated successfully!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update form");
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to update form");
     }
   };
 
@@ -173,6 +171,16 @@ export default function FormDetailPage({ params }: PageProps) {
       toast.success("Form published successfully!");
     } catch {
       toast.error("Failed to publish form");
+    }
+  };
+
+  const handleUnpublish = async () => {
+    if (!confirm("Are you sure you want to unpublish this form? It will be reverted to draft status.")) return;
+    try {
+      await unpublishFormMutation.mutateAsync(id);
+      toast.success("Form unpublished successfully!");
+    } catch {
+      toast.error("Failed to unpublish form");
     }
   };
 
@@ -214,7 +222,7 @@ export default function FormDetailPage({ params }: PageProps) {
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <h2 className="text-2xl font-bold">Form Not Found</h2>
           <p className="text-muted-foreground mt-2">
-            The form you're looking for does not exist or has been deleted.
+            The form you&apos;re looking for does not exist or has been deleted.
           </p>
           <Link href="/forms" className="mt-4">
             <Button variant="outline" className="gap-2">
@@ -259,11 +267,21 @@ export default function FormDetailPage({ params }: PageProps) {
           </div>
           <div className="flex items-center gap-2">
             {form.status === "PUBLISHED" && (
-              <Link href={`/public/form/${form.slug}`} target="_blank">
-                <Button variant="outline" className="gap-2">
-                  <ExternalLink className="h-4 w-4" /> View Live
+              <>
+                <Link href={`/public/form/${form.slug}`} target="_blank">
+                  <Button variant="outline" className="gap-2">
+                    <ExternalLink className="h-4 w-4" /> View Live
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  className="gap-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/20"
+                  onClick={handleUnpublish}
+                  disabled={unpublishFormMutation.isPending}
+                >
+                  <XCircle className="h-4 w-4" /> Unpublish
                 </Button>
-              </Link>
+              </>
             )}
             {form.status === "DRAFT" && (
               <Button
@@ -424,7 +442,7 @@ export default function FormDetailPage({ params }: PageProps) {
                   <CardTitle className="text-lg">Form Questions ({fields.length})</CardTitle>
                   <CardDescription>Add, rearrange, and configure your questions</CardDescription>
                 </div>
-                <Select onValueChange={(val) => handleAddField(val as any)}>
+                <Select onValueChange={(val) => handleAddField(val as typeof FIELD_TYPES[number])}>
                   <SelectTrigger className="w-[180px]">
                     <Plus className="mr-2 h-4 w-4" /> Add Question
                   </SelectTrigger>

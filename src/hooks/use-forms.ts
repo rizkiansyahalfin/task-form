@@ -99,6 +99,22 @@ export function usePublishForm() {
   });
 }
 
+export function useUnpublishForm() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiFetch<FormWithFields>(`/api/forms/${id}/publish`, {
+        method: "DELETE",
+      });
+      return res.data!;
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ["forms"] });
+      queryClient.invalidateQueries({ queryKey: ["forms", id] });
+    },
+  });
+}
+
 export function useDeleteForm() {
   const queryClient = useQueryClient();
   return useMutation({
