@@ -2,7 +2,6 @@
 
 import { use, useState, useEffect } from "react";
 import {
-  FileText,
   Calendar,
   AlertTriangle,
   UploadCloud,
@@ -46,7 +45,10 @@ export default function PublicFormPage({ params }: PageProps) {
   // Pre-fill email from session if logged in
   useEffect(() => {
     if (session?.user?.email) {
-      setEmail(session.user.email);
+      const timer = setTimeout(() => {
+        setEmail((prev) => prev || session.user.email || "");
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [session]);
   const [answers, setAnswers] = useState<Record<string, { value?: string; values?: string[] }>>({});
@@ -142,8 +144,9 @@ export default function PublicFormPage({ params }: PageProps) {
       }));
 
       toast.success(`File "${file.name}" uploaded successfully!`);
-    } catch (err: any) {
-      toast.error(err.message || "File upload failed");
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || "File upload failed");
     } finally {
       setUploadingFieldId(null);
     }
@@ -201,8 +204,9 @@ export default function PublicFormPage({ params }: PageProps) {
       await submitFormMutation.mutateAsync(payload);
       setIsSubmitted(true);
       toast.success("Submission sent successfully!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to submit task form");
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to submit task form");
     }
   };
 
