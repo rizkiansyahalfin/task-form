@@ -1,4 +1,4 @@
-import type { SubmissionStatus } from "@/generated/prisma/client";
+import type { SubmissionStatus } from "@prisma/client";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { storage } from "@/lib/storage";
 import { formRepository } from "@/repositories/form.repository";

@@ -1,4 +1,4 @@
-import type { Prisma } from "@/generated/prisma/client";
+import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import type { CreateFormFieldInput, CreateFormInput, PaginationParams } from "@/types";
 

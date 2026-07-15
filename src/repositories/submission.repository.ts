@@ -1,4 +1,4 @@
-import type { Prisma, SubmissionStatus } from "@/generated/prisma/client";
+import type { Prisma, SubmissionStatus } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import type { PaginationParams, SubmitFormInput } from "@/types";
 

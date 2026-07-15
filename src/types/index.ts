@@ -1,4 +1,4 @@
-import type { FieldType, FormStatus, SubmissionStatus } from "@/generated/prisma/client";
+import type { FieldType, FormStatus, SubmissionStatus } from "@prisma/client";
 
 export type { FieldType, FormStatus, SubmissionStatus };
 
