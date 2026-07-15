@@ -5,7 +5,7 @@ import { applySecurityHeaders } from "@/lib/security-headers";
 
 const protectedPrefixes = ["/dashboard", "/forms", "/submissions", "/settings"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const sessionCookie =
