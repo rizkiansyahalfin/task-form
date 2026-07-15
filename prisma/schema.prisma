@@ -1,0 +1,233 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider   = "prisma-client-js"
+  output     = "../src/generated/prisma"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================================================
+// Better Auth Models
+// =============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          String    @default("mentor")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  sessions Session[]
+  accounts Account[]
+  forms    Form[]
+
+  @@index([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// =============================================================================
+// TaskForm Models
+// =============================================================================
+
+enum FormStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum FieldType {
+  SHORT_TEXT
+  PARAGRAPH
+  NUMBER
+  EMAIL
+  PHONE
+  URL
+  DATE
+  DROPDOWN
+  RADIO
+  CHECKBOX
+  HEADING
+  DIVIDER
+  FILE_UPLOAD
+  IMAGE_UPLOAD
+  GITHUB_URL
+  DEPLOY_URL
+  TEXTAREA
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  REVIEWED
+  REVISION
+  COMPLETED
+  LATE
+}
+
+model Form {
+  id             String     @id @default(cuid())
+  slug           String     @unique
+  title          String
+  description    String?
+  status         FormStatus @default(DRAFT)
+  deadline       DateTime?
+  allowLate      Boolean    @default(false)
+  maxSubmissions Int?
+  allowEdit      Boolean    @default(false)
+  collectEmail   Boolean    @default(false)
+  successTitle   String?
+  successMessage String?
+  customMessage  String?
+  mentorId       String
+  mentor         User       @relation(fields: [mentorId], references: [id])
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  deletedAt      DateTime?
+
+  fields      FormField[]
+  submissions Submission[]
+
+  @@index([mentorId])
+  @@index([status])
+  @@index([slug])
+  @@index([deletedAt])
+}
+
+model FormField {
+  id           String    @id @default(cuid())
+  formId       String
+  form         Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
+  type         FieldType
+  label        String
+  description  String?
+  placeholder  String?
+  required     Boolean   @default(false)
+  order        Int
+  validation   Json?
+  defaultValue String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  options FormFieldOption[]
+  answers SubmissionAnswer[]
+
+  @@index([formId, order])
+  @@index([deletedAt])
+}
+
+model FormFieldOption {
+  id      String    @id @default(cuid())
+  fieldId String
+  field   FormField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  label   String
+  value   String
+  order   Int
+
+  @@index([fieldId, order])
+}
+
+model Submission {
+  id          String           @id @default(cuid())
+  formId      String
+  form        Form             @relation(fields: [formId], references: [id])
+  status      SubmissionStatus @default(SUBMITTED)
+  email       String?
+  ipAddress   String?
+  userAgent   String?
+  submittedAt DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+
+  answers SubmissionAnswer[]
+  files   SubmissionFile[]
+
+  @@index([formId])
+  @@index([status])
+  @@index([submittedAt])
+  @@index([deletedAt])
+}
+
+model SubmissionAnswer {
+  id           String     @id @default(cuid())
+  submissionId String
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  fieldId      String
+  field        FormField  @relation(fields: [fieldId], references: [id])
+  value        String?
+  values       String[]   @default([])
+
+  @@index([submissionId])
+  @@index([fieldId])
+}
+
+model SubmissionFile {
+  id           String     @id @default(cuid())
+  submissionId String
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  fieldId      String?
+  fileName     String
+  fileKey      String
+  mimeType     String
+  fileSize     Int
+  url          String?
+  createdAt    DateTime   @default(now())
+
+  @@index([submissionId])
+  @@index([fieldId])
+}

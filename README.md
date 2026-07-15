@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TaskForm 🚀
 
-## Getting Started
+TaskForm adalah aplikasi berbasis Next.js (App Router) untuk membantu Mentor mengelola tugas santri/siswa dengan sistem formulir dinamis (seperti Google Forms) dan pengumpulan file tugas yang terintegrasi.
 
-First, run the development server:
+---
 
+## 🛠️ Fitur Utama
+
+- **Dashboard Mentor**: Ringkasan statistik (jumlah form, total submission, submission masuk hari ini, review pending) dan daftar form terbaru.
+- **Form Builder**: Mendesain formulir dinamis dengan tipe input (Short Text, Paragraph, Number, Date, Dropdown, Radio, Checkbox, File/Image Upload, GitHub/Deployment Link).
+- **Public Form Task Submission**: Halaman publik untuk santri mengumpulkan tugas dengan verifikasi deadline dan late submission.
+- **Review Submissions**: Panel khusus mentor untuk memeriksa, mengunduh file tugas, dan memperbarui status tugas santri (SUBMITTED, REVIEWED, REVISION, COMPLETED, LATE).
+- **Integrated Storage & Database**: Adaptor penyimpanan Cloudflare R2 dengan fallback penyimpanan lokal, serta ORM Prisma dengan PostgreSQL.
+- **Better Auth Integration**: Pengamanan data mentor & santri menggunakan Better Auth (session cookie & credential auth).
+
+---
+
+## 🚀 Memulai (Lokal)
+
+### 1. Prasyarat
+Pastikan Anda sudah menginstal:
+- [Node.js](https://nodejs.org) (v20+)
+- [pnpm](https://pnpm.io/) (disarankan) atau `npm` / `yarn`
+
+### 2. Kloning Project & Install Dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repo-url>
+cd google-form-version
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Setup Environment Variables
+Salin file `.env.example` menjadi `.env`:
+```bash
+cp .env.example .env
+```
+Isi konfigurasi database PostgreSQL, Better Auth, dan Cloudflare R2 di `.env`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Sinkronisasi Database & Seed Data
+```bash
+# Generate Prisma Client
+npx prisma generate
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Sinkronisasi skema database ke PostgreSQL (lokal/online)
+npx prisma db push
 
-## Learn More
+# Jalankan seed data untuk akun mentor & santri awal
+npx tsx prisma/seed.ts
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 5. Jalankan Development Server
+```bash
+pnpm dev
+```
+Buka [http://localhost:3000](http://localhost:3000) pada browser Anda.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔑 Akun Seed Default
 
-## Deploy on Vercel
+Setelah menjalankan script seed, akun-akun berikut akan tersedia di database:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 👨‍🏫 Mentor / Admin
+- **Email:** `mentor@taskform.dev`
+- **Password:** `mentor363`
+- **Role:** `mentor`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 🧑‍🎓 Santri (Students)
+Semua akun santri menggunakan password default: **`santri123`** dengan role `student`.
+
+| Nama | Email Akun |
+|---|---|
+| Hudzaifah | `hudzaifah@taskform.dev` |
+| Hammas | `hammas@taskform.dev` |
+| Raihan | `raihan@taskform.dev` |
+| Fairuz | `fairuz@taskform.dev` |
+| Ibrohim | `ibrohim@taskform.dev` |
+| Yazid | `yazid@taskform.dev` |
+| Satrio | `satrio@taskform.dev` |
+| Revaldi | `revaldi@taskform.dev` |
+| Faren | `faren@taskform.dev` |
+| Faris | `faris@taskform.dev` |
+| Dzaky | `dzaky@taskform.dev` |
+
+---
+
+## 🚢 Panduan Deploy ke Production (Vercel)
+
+1. Hubungkan repository GitHub Anda ke **Vercel**.
+2. Masukkan semua variabel lingkungan di bawah pada tab **Settings -> Environment Variables** di Vercel:
+   ```env
+   NEXT_PUBLIC_APP_URL=https://app-anda.vercel.app
+   BETTER_AUTH_URL=https://app-anda.vercel.app
+   DATABASE_URL=postgresql://... (hosted database Neon/Supabase)
+   BETTER_AUTH_SECRET=rahasia-enkripsi-kuat-32-karakter
+   ```
+3. Konfigurasikan **Build Command** pada Vercel Dashboard:
+   ```bash
+   prisma generate && next build
+   ```
+4. Deploy!
