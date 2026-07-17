@@ -32,6 +32,7 @@ import { usePublicForm, useSubmitForm } from "@/hooks/use-forms";
 import { useStudentSubmission } from "@/hooks/use-submissions";
 import { useSession } from "@/lib/auth-client";
 import type { FormFieldWithOptions, FormFieldOptionItem, SubmissionAnswerItem, SubmissionFileItem } from "@/types";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -234,41 +235,55 @@ export default function PublicFormPage({ params }: PageProps) {
 
   if (isLoading || isSubmissionLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-950">
-        <Card className="w-full max-w-2xl">
-          <CardHeader className="space-y-3">
-            <Skeleton className="h-8 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <div className="fixed top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
+        <div className="flex min-h-screen items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-950">
+          <Card className="w-full max-w-2xl">
+            <CardHeader className="space-y-3">
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </>
     );
   }
 
   if (error || !form || form.status !== "PUBLISHED") {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-950">
-        <Card className="w-full max-w-md text-center">
-          <CardHeader>
-            <Lock className="mx-auto h-12 w-12 text-destructive mb-3" />
-            <CardTitle>Formulir Tidak Tersedia</CardTitle>
-            <CardDescription>
-              Formulir tugas ini tidak tersedia, belum diterbitkan, atau tidak ditemukan.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
+      <>
+        <div className="fixed top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
+        <div className="flex min-h-screen items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-950">
+          <Card className="w-full max-w-md text-center">
+            <CardHeader>
+              <Lock className="mx-auto h-12 w-12 text-destructive mb-3" />
+              <CardTitle>Formulir Tidak Tersedia</CardTitle>
+              <CardDescription>
+                Formulir tugas ini tidak tersedia, belum diterbitkan, atau tidak ditemukan.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </>
     );
   }
 
   if (studentSubmission) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 py-10 px-4">
+      <>
+        <div className="fixed top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
+        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 py-10 px-4">
         <div className="max-w-2xl mx-auto space-y-6">
           <Card>
             <CardHeader className="text-center pb-6">
@@ -417,27 +432,37 @@ export default function PublicFormPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   if (isSubmitted) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-950">
-        <Card className="w-full max-w-xl text-center py-8">
-          <CardHeader>
-            <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-3" />
-            <CardTitle className="text-3xl">{form.successTitle || "Thank you!"}</CardTitle>
-            <CardDescription className="text-lg mt-2">
-              {form.successMessage || "Your submission has been received."}
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
+      <>
+        <div className="fixed top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
+        <div className="flex min-h-screen items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-950">
+          <Card className="w-full max-w-xl text-center py-8">
+            <CardHeader>
+              <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-3" />
+              <CardTitle className="text-3xl">{form.successTitle || "Thank you!"}</CardTitle>
+              <CardDescription className="text-lg mt-2">
+                {form.successMessage || "Your submission has been received."}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 py-12 px-4">
+    <>
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 py-12 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Login Recommendation Banner */}
         {!isSessionPending && !session && showLoginPrompt && (
@@ -760,5 +785,6 @@ export default function PublicFormPage({ params }: PageProps) {
         </Dialog>
       </div>
     </div>
+    </>
   );
 }

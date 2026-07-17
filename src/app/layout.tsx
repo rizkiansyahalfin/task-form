@@ -32,13 +32,14 @@ export default function RootLayout({
     <html
       lang="id"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && (new Date().getHours() >= 18 || new Date().getHours() < 6))) {
                   document.documentElement.classList.add('dark');
                 } else {
                   document.documentElement.classList.remove('dark');

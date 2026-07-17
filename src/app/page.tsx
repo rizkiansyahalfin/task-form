@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookOpen, CheckCircle, FileText, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
             <span className="text-xl font-bold tracking-tight">TaskForm</span>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <Link href="/login">
               <Button variant="ghost" size="sm">
                 Masuk

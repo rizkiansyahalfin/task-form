@@ -30,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useDashboardStats, useForms, useStudentForms } from "@/hooks/use-forms";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function DashboardPage() {
   const { data: session, isPending } = useSession();
@@ -322,6 +323,7 @@ function StudentDashboard({ name }: StudentDashboardProps) {
               <p className="text-sm font-semibold">Assalamu&apos;alaikum, {name} 👋</p>
               <p className="text-xs text-muted-foreground">Portal Santri</p>
             </div>
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
