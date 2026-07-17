@@ -76,14 +76,14 @@ function MentorDashboard() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Dasbor</h1>
             <p className="text-muted-foreground">
-              Overview of your forms and task submissions.
+              Ringkasan formulir dan pengumpulan tugas Anda.
             </p>
           </div>
           <Link href="/forms/new">
             <Button className="gap-2">
-              <Plus className="h-4 w-4" /> Create Form
+              <Plus className="h-4 w-4" /> Buat Formulir
             </Button>
           </Link>
         </div>
@@ -92,7 +92,7 @@ function MentorDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="relative overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Forms</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Formulir</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -106,7 +106,7 @@ function MentorDashboard() {
 
           <Card className="relative overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Pengumpulan</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -120,7 +120,7 @@ function MentorDashboard() {
 
           <Card className="relative overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Submissions Today</CardTitle>
+              <CardTitle className="text-sm font-medium">Pengumpulan Hari Ini</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -134,7 +134,7 @@ function MentorDashboard() {
 
           <Card className="relative overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+              <CardTitle className="text-sm font-medium">Menunggu Tinjauan</CardTitle>
               <AlertCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -154,14 +154,14 @@ function MentorDashboard() {
           <Card className="col-span-2">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Recent Forms</CardTitle>
+                <CardTitle>Formulir Terbaru</CardTitle>
                 <CardDescription>
-                  Your recently created task forms.
+                  Formulir tugas yang baru Anda buat.
                 </CardDescription>
               </div>
               <Link href="/forms">
                 <Button variant="outline" size="sm">
-                  View All
+                  Lihat Semua
                 </Button>
               </Link>
             </CardHeader>
@@ -175,10 +175,10 @@ function MentorDashboard() {
               ) : forms.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
                   <FileText className="h-12 w-12 text-muted-foreground/50 mb-3" />
-                  <p className="text-sm">No forms created yet.</p>
+                  <p className="text-sm">Belum ada formulir yang dibuat.</p>
                   <Link href="/forms/new" className="mt-2">
                     <Button variant="link" size="sm">
-                      Create your first form
+                      Buat formulir pertama Anda
                     </Button>
                   </Link>
                 </div>
@@ -211,8 +211,8 @@ function MentorDashboard() {
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3.5 w-3.5" />
                             {form.deadline
-                              ? `Deadline: ${format(new Date(form.deadline), "PPp")}`
-                              : "No deadline"}
+                              ? `Tenggat: ${format(new Date(form.deadline), "PPp")}`
+                              : "Tanpa Tenggat"}
                           </span>
                         </div>
                       </div>
@@ -222,7 +222,7 @@ function MentorDashboard() {
                           target="_blank"
                           className="text-xs text-blue-600 hover:underline flex items-center gap-1"
                         >
-                          View Live <ExternalLink className="h-3 w-3" />
+                          Lihat Langsung <ExternalLink className="h-3 w-3" />
                         </Link>
                       </div>
                     </div>

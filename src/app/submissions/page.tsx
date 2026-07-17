@@ -70,15 +70,15 @@ function SubmissionsContent() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "COMPLETED":
-        return <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100 dark:bg-green-950 dark:text-green-300">Completed</Badge>;
+        return <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100 dark:bg-green-950 dark:text-green-300">Selesai</Badge>;
       case "REVIEWED":
-        return <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300">Reviewed</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300">Ditinjau</Badge>;
       case "REVISION":
-        return <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100 dark:bg-amber-950 dark:text-amber-300">Revision</Badge>;
+        return <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100 dark:bg-amber-950 dark:text-amber-300">Perlu Revisi</Badge>;
       case "LATE":
-        return <Badge variant="destructive">Late</Badge>;
+        return <Badge variant="destructive">Terlambat</Badge>;
       default:
-        return <Badge variant="secondary">Submitted</Badge>;
+        return <Badge variant="secondary">Dikumpulkan</Badge>;
     }
   };
 
@@ -88,13 +88,13 @@ function SubmissionsContent() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Task Submissions</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Pengumpulan Tugas</h1>
             <p className="text-muted-foreground">
-              Review and grade submissions sent by your students/santri.
+              Tinjau dan nilai pengumpulan dari santri Anda.
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground">Filter by Form:</span>
+            <span className="text-sm font-medium text-muted-foreground">Filter berdasarkan Formulir:</span>
             <Select
               value={formId}
               onValueChange={(val) => {
@@ -106,7 +106,7 @@ function SubmissionsContent() {
                 <SelectValue placeholder="All Forms" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Forms</SelectItem>
+                <SelectItem value="all">Semua Formulir</SelectItem>
                 {forms.map((f) => (
                   <SelectItem key={f.id} value={f.id}>
                     {f.title}
@@ -127,9 +127,9 @@ function SubmissionsContent() {
         ) : submissions.length === 0 ? (
           <Card className="flex flex-col items-center justify-center p-12 text-center">
             <FolderOpen className="h-16 w-16 text-muted-foreground/30 mb-4" />
-            <CardTitle className="text-xl">No submissions yet</CardTitle>
+            <CardTitle className="text-xl">Belum ada pengumpulan</CardTitle>
             <CardDescription className="max-w-sm mt-2">
-              No submissions match your query. Share the form tasks link with your students.
+              Belum ada pengumpulan yang sesuai dengan filter Anda. Bagikan link formulir kepada santri Anda.
             </CardDescription>
           </Card>
         ) : (
@@ -138,11 +138,11 @@ function SubmissionsContent() {
               <table className="min-w-full divide-y divide-border text-sm">
                 <thead className="bg-zinc-50 dark:bg-zinc-900 text-muted-foreground font-semibold">
                   <tr>
-                    <th className="px-6 py-3.5 text-left">Student Email/IP</th>
-                    <th className="px-6 py-3.5 text-left">Form Title</th>
-                    <th className="px-6 py-3.5 text-left">Submitted At</th>
+                    <th className="px-6 py-3.5 text-left">Email/IP Santri</th>
+                    <th className="px-6 py-3.5 text-left">Judul Formulir</th>
+                    <th className="px-6 py-3.5 text-left">Waktu Pengumpulan</th>
                     <th className="px-6 py-3.5 text-left">Status</th>
-                    <th className="px-6 py-3.5 text-right">Actions</th>
+                    <th className="px-6 py-3.5 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -163,7 +163,7 @@ function SubmissionsContent() {
                           className="gap-1"
                           onClick={() => setSelectedSubId(sub.id)}
                         >
-                          <Eye className="h-3.5 w-3.5" /> Review
+                          <Eye className="h-3.5 w-3.5" /> Tinjau
                         </Button>
                       </td>
                     </tr>
@@ -183,10 +183,10 @@ function SubmissionsContent() {
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
-              Previous
+              Sebelumnya
             </Button>
             <span className="flex items-center px-4 text-sm font-medium">
-              Page {page} of {meta.totalPages}
+              Halaman {page} dari {meta.totalPages}
             </span>
             <Button
               variant="outline"
@@ -194,7 +194,7 @@ function SubmissionsContent() {
               disabled={page >= meta.totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
-              Next
+              Berikutnya
             </Button>
           </div>
         )}
@@ -203,9 +203,9 @@ function SubmissionsContent() {
         <Dialog open={!!selectedSubId} onOpenChange={(open) => !open && setSelectedSubId(null)}>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Review Submission</DialogTitle>
+              <DialogTitle>Tinjau Pengumpulan</DialogTitle>
               <DialogDescription>
-                Submitted by {currentSubmission?.email || "Anonymous"} on{" "}
+                Dikumpulkan oleh {currentSubmission?.email || "Anonim"} pada{" "}
                 {currentSubmission?.submittedAt && format(new Date(currentSubmission.submittedAt), "PPp")}
               </DialogDescription>
             </DialogHeader>
@@ -220,15 +220,15 @@ function SubmissionsContent() {
               <div className="space-y-6 py-4">
                 {/* Answers Section */}
                 <div className="space-y-4">
-                  <h3 className="font-semibold border-b pb-2">Student Answers</h3>
+                  <h3 className="font-semibold border-b pb-2">Jawaban Santri</h3>
                   {currentSubmission?.answers?.map((ans: SubmissionAnswerItem) => (
                     <div key={ans.id} className="space-y-1.5 border-l-2 pl-3 py-1">
                       <p className="text-xs font-semibold text-muted-foreground">
-                        {ans.field?.label || "Question"}
+                        {ans.field?.label || "Pertanyaan"}
                       </p>
                       <p className="text-sm">
                         {ans.value || ans.values?.join(", ") || (
-                          <span className="text-muted-foreground italic">No answer provided</span>
+                          <span className="text-muted-foreground italic">Tidak ada jawaban</span>
                         )}
                       </p>
                     </div>
@@ -238,7 +238,7 @@ function SubmissionsContent() {
                 {/* Uploaded Files Section */}
                 {currentSubmission?.files && currentSubmission.files.length > 0 && (
                   <div className="space-y-3">
-                    <h3 className="font-semibold border-b pb-2">Uploaded Files</h3>
+                    <h3 className="font-semibold border-b pb-2">File yang Diunggah</h3>
                     <div className="grid gap-2">
                       {currentSubmission.files?.map((file: SubmissionFileItem) => (
                         <div
@@ -254,7 +254,7 @@ function SubmissionsContent() {
                           {file.url && (
                             <a href={file.url} target="_blank" rel="noopener noreferrer">
                               <Button variant="outline" size="sm" className="gap-1.5">
-                                <Download className="h-3.5 w-3.5" /> Download
+                                <Download className="h-3.5 w-3.5" /> Unduh
                               </Button>
                             </a>
                           )}
@@ -266,7 +266,7 @@ function SubmissionsContent() {
 
                 {/* Grade & Actions */}
                 <div className="space-y-4 border-t pt-4">
-                  <h3 className="font-semibold text-sm">Update Submission Status</h3>
+                  <h3 className="font-semibold text-sm">Perbarui Status Pengumpulan</h3>
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                     <Select
                       value={currentSubmission?.status}
@@ -274,13 +274,13 @@ function SubmissionsContent() {
                       disabled={updateStatusMutation.isPending}
                     >
                       <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select Status" />
+                        <SelectValue placeholder="Pilih Status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="SUBMITTED">Submitted</SelectItem>
-                        <SelectItem value="REVIEWED">Reviewed</SelectItem>
-                        <SelectItem value="REVISION">Request Revision</SelectItem>
-                        <SelectItem value="COMPLETED">Completed</SelectItem>
+                        <SelectItem value="SUBMITTED">Dikumpulkan</SelectItem>
+                        <SelectItem value="REVIEWED">Ditinjau</SelectItem>
+                        <SelectItem value="REVISION">Minta Revisi</SelectItem>
+                        <SelectItem value="COMPLETED">Selesai</SelectItem>
                       </SelectContent>
                     </Select>
 
@@ -290,7 +290,7 @@ function SubmissionsContent() {
                       onClick={() => currentSubmission && handleDelete(currentSubmission.id)}
                       disabled={deleteSubMutation.isPending}
                     >
-                      <Trash className="h-4 w-4" /> Delete Submission
+                      <Trash className="h-4 w-4" /> Hapus Pengumpulan
                     </Button>
                   </div>
                 </div>

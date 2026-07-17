@@ -8,7 +8,8 @@ import {
   CheckCircle,
   FileCheck,
   Loader2,
-  Lock
+  Lock,
+  Info
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -41,7 +42,7 @@ export default function PublicFormPage({ params }: PageProps) {
   // Queries
   const { data: form, isLoading, error } = usePublicForm(slug);
   const submitFormMutation = useSubmitForm(slug);
-  const { data: session } = useSession();
+  const { data: session, isPending: isSessionPending } = useSession();
 
   // Check if student is logged in and fetch their submission
   const isLoggedInStudent = session?.user && (session.user as { role?: string }).role === "student";
@@ -67,6 +68,7 @@ export default function PublicFormPage({ params }: PageProps) {
   // UI States
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [uploadingFieldId, setUploadingFieldId] = useState<string | null>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(true);
 
   const isDeadlinePassed = form?.deadline ? new Date() > new Date(form.deadline) : false;
   const isClosed = isDeadlinePassed && !form?.allowLate;
@@ -166,7 +168,7 @@ export default function PublicFormPage({ params }: PageProps) {
     e.preventDefault();
 
     if (form?.collectEmail && !email.trim()) {
-      toast.error("Email address is required");
+      toast.error("Alamat email wajib diisi");
       return;
     }
 
@@ -185,7 +187,7 @@ export default function PublicFormPage({ params }: PageProps) {
           file;
 
         if (!hasAnswer) {
-          toast.error(`Question "${field.label}" is required`);
+          toast.error(`Pertanyaan "${field.label}" wajib diisi`);
           return;
         }
       }
@@ -213,10 +215,10 @@ export default function PublicFormPage({ params }: PageProps) {
 
       await submitFormMutation.mutateAsync(payload);
       setIsSubmitted(true);
-      toast.success("Submission sent successfully!");
+      toast.success("Jawaban berhasil dikumpulkan!");
     } catch (err) {
       const error = err as Error;
-      toast.error(error.message || "Failed to submit task form");
+      toast.error(error.message || "Gagal mengumpulkan jawaban");
     }
   };
 
@@ -244,9 +246,9 @@ export default function PublicFormPage({ params }: PageProps) {
         <Card className="w-full max-w-md text-center">
           <CardHeader>
             <Lock className="mx-auto h-12 w-12 text-destructive mb-3" />
-            <CardTitle>Form Unavailable</CardTitle>
+            <CardTitle>Formulir Tidak Tersedia</CardTitle>
             <CardDescription>
-              This form task is not available, not published, or does not exist.
+              Formulir tugas ini tidak tersedia, belum diterbitkan, atau tidak ditemukan.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -427,13 +429,39 @@ export default function PublicFormPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 py-12 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
+        {/* Login Recommendation Banner */}
+        {!isSessionPending && !session && showLoginPrompt && (
+          <Alert className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/50">
+            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertTitle className="font-semibold text-blue-850 dark:text-blue-400">Disarankan Login</AlertTitle>
+            <AlertDescription className="text-sm mt-1">
+              Login dengan akun santri untuk melacak status pengumpulan tugas. Anda tetap bisa mengumpulkan tanpa login.
+            </AlertDescription>
+            <div className="mt-3 flex items-center gap-2">
+              <Link href={`/login?redirect=${encodeURIComponent(`/public/form/${slug}`)}`}>
+                <Button size="sm" className="h-8">
+                  Login
+                </Button>
+              </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setShowLoginPrompt(false)}
+              >
+                Lanjutkan Tanpa Login
+              </Button>
+            </div>
+          </Alert>
+        )}
+
         {/* Form Meta Alert */}
         {isDeadlinePassed && form.allowLate && (
           <Alert className="bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-950 dark:text-amber-300">
             <AlertTriangle className="h-4 w-4 text-amber-700 dark:text-amber-400" />
-            <AlertTitle>Late Submissions Allowed</AlertTitle>
+            <AlertTitle>Pengumpulan Terlambat Diizinkan</AlertTitle>
             <AlertDescription>
-              The deadline for this form has passed ({format(new Date(form.deadline!), "PPp")}), but late submissions are still being accepted.
+              Tenggat formulir ini telah lewat ({format(new Date(form.deadline!), "PPp")}), namun pengumpulan terlambat masih diterima.
             </AlertDescription>
           </Alert>
         )}
@@ -441,9 +469,9 @@ export default function PublicFormPage({ params }: PageProps) {
         {isClosed && (
           <Alert variant="destructive">
             <Lock className="h-4 w-4" />
-            <AlertTitle>Submissions Closed</AlertTitle>
+            <AlertTitle>Pengumpulan Ditutup</AlertTitle>
             <AlertDescription>
-              This task is closed. The deadline was {format(new Date(form.deadline!), "PPp")} and late submissions are not allowed.
+              Tugas ini sudah ditutup. Tenggat waktu adalah {format(new Date(form.deadline!), "PPp")} dan pengumpulan terlambat tidak diizinkan.
             </AlertDescription>
           </Alert>
         )}
@@ -453,12 +481,12 @@ export default function PublicFormPage({ params }: PageProps) {
           <CardHeader>
             <CardTitle className="text-3xl">{form.title}</CardTitle>
             <CardDescription className="text-base mt-2">
-              {form.description || "Please fill out the questions below."}
+              {form.description || "Silakan isi pertanyaan di bawah ini."}
             </CardDescription>
             {form.deadline && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground mt-4">
                 <Calendar className="h-4 w-4" />
-                <span>Deadline: {format(new Date(form.deadline), "PPp")}</span>
+                <span>Tenggat: {format(new Date(form.deadline), "PPp")}</span>
               </div>
             )}
           </CardHeader>
@@ -471,12 +499,12 @@ export default function PublicFormPage({ params }: PageProps) {
               <CardContent className="pt-6">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-base font-semibold">
-                    Email Address <span className="text-destructive">*</span>
+                    Alamat Email <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="your-email@student.com"
+                    placeholder="email@santri.com"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -636,7 +664,7 @@ export default function PublicFormPage({ params }: PageProps) {
                             }}
                             disabled={isClosed}
                           >
-                            Remove
+                            Hapus
                           </Button>
                         </div>
                       ) : (
@@ -651,16 +679,16 @@ export default function PublicFormPage({ params }: PageProps) {
                           {uploadingFieldId === field.id ? (
                             <div className="flex flex-col items-center justify-center">
                               <Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
-                              <p className="text-sm font-medium">Uploading file...</p>
+                              <p className="text-sm font-medium">Mengunggah file...</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center">
                               <UploadCloud className="h-8 w-8 text-muted-foreground mb-2" />
                               <p className="text-sm font-medium text-primary hover:underline">
-                                Click to upload a file
+                                Klik untuk mengunggah file
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">
-                                {field.type === "IMAGE_UPLOAD" ? "Images only" : "All file types allowed"} (Max 10MB)
+                                {field.type === "IMAGE_UPLOAD" ? "Hanya gambar" : "Semua tipe file diizinkan"} (Maks 10MB)
                               </p>
                             </div>
                           )}
@@ -680,10 +708,10 @@ export default function PublicFormPage({ params }: PageProps) {
           >
             {submitFormMutation.isPending ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Submitting...
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Mengirim...
               </>
             ) : (
-              "Submit Answers"
+              "Kirim Jawaban"
             )}
           </Button>
         </form>
