@@ -61,6 +61,7 @@ export default function FormDetailPage({ params }: PageProps) {
     customMessage,
     fields,
     selectedFieldIndex,
+    isDirty,
     setTitle,
     setDescription,
     setDeadline,
@@ -74,6 +75,7 @@ export default function FormDetailPage({ params }: PageProps) {
     removeField,
     moveField,
     selectField,
+    markSaved,
     loadForm,
     reset
   } = useFormBuilderStore();
@@ -118,6 +120,17 @@ export default function FormDetailPage({ params }: PageProps) {
     return () => reset();
   }, [reset]);
 
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
   const handleAddField = (type: typeof FIELD_TYPES[number]) => {
     addField({
       type,
@@ -137,7 +150,7 @@ export default function FormDetailPage({ params }: PageProps) {
 
   const handleSaveForm = async () => {
     if (!title.trim()) {
-      toast.error("Please provide a form title");
+      toast.error("Judul formulir wajib diisi");
       return;
     }
 
@@ -160,41 +173,42 @@ export default function FormDetailPage({ params }: PageProps) {
       };
 
       await updateFormMutation.mutateAsync(payload);
-      toast.success("Form updated successfully!");
+      markSaved();
+      toast.success("Formulir berhasil diperbarui!");
     } catch (err) {
       const error = err as Error;
-      toast.error(error.message || "Failed to update form");
+      toast.error(error.message || "Gagal memperbarui formulir");
     }
   };
 
   const handlePublish = async () => {
     try {
       await publishFormMutation.mutateAsync(id);
-      toast.success("Form published successfully!");
+      toast.success("Formulir berhasil diterbitkan!");
     } catch {
-      toast.error("Failed to publish form");
+      toast.error("Gagal menerbitkan formulir");
     }
   };
 
   const handleUnpublish = async () => {
-    if (!confirm("Are you sure you want to unpublish this form? It will be reverted to draft status.")) return;
+    if (!confirm("Apakah Anda yakin ingin mencabut publikasi formulir ini? Status akan kembali menjadi draft.")) return;
     try {
       await unpublishFormMutation.mutateAsync(id);
-      toast.success("Form unpublished successfully!");
+      toast.success("Formulir berhasil dicabut publikasinya!");
     } catch {
-      toast.error("Failed to unpublish form");
+      toast.error("Gagal mencabut publikasi formulir");
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this form? This action cannot be undone.")) return;
+    if (!confirm("Apakah Anda yakin ingin menghapus formulir ini? Tindakan ini tidak dapat dibatalkan.")) return;
     try {
       await deleteFormMutation.mutateAsync(id);
-      toast.success("Form deleted successfully!");
+      toast.success("Formulir berhasil dihapus!");
       reset();
       router.push("/forms");
     } catch {
-      toast.error("Failed to delete form");
+      toast.error("Gagal menghapus formulir");
     }
   };
 
@@ -222,13 +236,13 @@ export default function FormDetailPage({ params }: PageProps) {
     return (
       <MentorLayout>
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <h2 className="text-2xl font-bold">Form Not Found</h2>
+          <h2 className="text-2xl font-bold">Formulir Tidak Ditemukan</h2>
           <p className="text-muted-foreground mt-2">
-            The form you&apos;re looking for does not exist or has been deleted.
+            Formulir yang Anda cari tidak ada atau sudah dihapus.
           </p>
           <Link href="/forms" className="mt-4">
             <Button variant="outline" className="gap-2">
-              <ArrowLeft className="h-4 w-4" /> Back to Forms
+              <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar Formulir
             </Button>
           </Link>
         </div>
@@ -248,8 +262,8 @@ export default function FormDetailPage({ params }: PageProps) {
               </Button>
             </Link>
             <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight">Edit Form</h1>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-3xl font-bold tracking-tight">Edit Formulir</h1>
                 <Badge
                   variant={
                     form.status === "PUBLISHED"
@@ -259,25 +273,31 @@ export default function FormDetailPage({ params }: PageProps) {
                       : "destructive"
                   }
                 >
-                  {form.status.toLowerCase()}
+                  {form.status === "PUBLISHED" ? "Diterbitkan" : form.status === "DRAFT" ? "Draft" : "Diarsipkan"}
                 </Badge>
+                {isDirty && (
+                  <span className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium">
+                    <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    Perubahan belum disimpan
+                  </span>
+                )}
               </div>
               <p className="text-muted-foreground">
-                Edit and manage your form task configuration.
+                Edit dan kelola konfigurasi formulir tugas Anda.
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             {form.status === "PUBLISHED" && (
               <>
                 <Link href={`/forms/${id}/progress`}>
                   <Button variant="outline" className="gap-2">
-                    <Users className="h-4 w-4" /> View Progress
+                    <Users className="h-4 w-4" /> Lihat Progress
                   </Button>
                 </Link>
                 <Link href={`/public/form/${form.slug}`} target="_blank">
                   <Button variant="outline" className="gap-2">
-                    <ExternalLink className="h-4 w-4" /> View Live
+                    <ExternalLink className="h-4 w-4" /> Lihat Live
                   </Button>
                 </Link>
                 <Button
@@ -286,7 +306,7 @@ export default function FormDetailPage({ params }: PageProps) {
                   onClick={handleUnpublish}
                   disabled={unpublishFormMutation.isPending}
                 >
-                  <XCircle className="h-4 w-4" /> Unpublish
+                  <XCircle className="h-4 w-4" /> Cabut Publikasi
                 </Button>
               </>
             )}
@@ -297,7 +317,7 @@ export default function FormDetailPage({ params }: PageProps) {
                 onClick={handlePublish}
                 disabled={publishFormMutation.isPending}
               >
-                <CheckCircle className="h-4 w-4" /> Publish
+                <CheckCircle className="h-4 w-4" /> Terbitkan
               </Button>
             )}
             <Button
@@ -310,7 +330,7 @@ export default function FormDetailPage({ params }: PageProps) {
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              Save Changes
+              Simpan Perubahan
             </Button>
           </div>
         </div>

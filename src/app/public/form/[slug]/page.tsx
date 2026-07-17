@@ -27,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { usePublicForm, useSubmitForm } from "@/hooks/use-forms";
 import { useStudentSubmission } from "@/hooks/use-submissions";
 import { useSession } from "@/lib/auth-client";
@@ -69,6 +70,7 @@ export default function PublicFormPage({ params }: PageProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [uploadingFieldId, setUploadingFieldId] = useState<string | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(true);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const isDeadlinePassed = form?.deadline ? new Date() > new Date(form.deadline) : false;
   const isClosed = isDeadlinePassed && !form?.allowLate;
@@ -164,7 +166,8 @@ export default function PublicFormPage({ params }: PageProps) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Step 1: Validate and open confirmation dialog
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (form?.collectEmail && !email.trim()) {
@@ -193,6 +196,13 @@ export default function PublicFormPage({ params }: PageProps) {
       }
     }
 
+    // All validation passed — open confirmation dialog
+    setShowConfirmDialog(true);
+  };
+
+  // Step 2: User confirmed — run actual submission
+  const handleConfirmedSubmit = async () => {
+    setShowConfirmDialog(false);
     try {
       // Build answers array format for API
       const formattedAnswers = Object.entries(answers).map(([fieldId, ans]) => ({
@@ -715,6 +725,39 @@ export default function PublicFormPage({ params }: PageProps) {
             )}
           </Button>
         </form>
+
+        {/* Confirmation Dialog */}
+        <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Konfirmasi Pengumpulan</DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin mengumpulkan jawaban ini? Pastikan semua jawaban sudah benar sebelum mengirim.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowConfirmDialog(false)}
+                disabled={submitFormMutation.isPending}
+                className="w-full sm:w-auto"
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleConfirmedSubmit}
+                disabled={submitFormMutation.isPending}
+                className="w-full sm:w-auto"
+              >
+                {submitFormMutation.isPending ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Mengirim...</>
+                ) : (
+                  "Ya, Kirim Sekarang"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

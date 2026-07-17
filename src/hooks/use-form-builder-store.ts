@@ -15,6 +15,7 @@ interface FormBuilderState {
   customMessage: string;
   fields: CreateFormFieldInput[];
   selectedFieldIndex: number | null;
+  isDirty: boolean;
   setTitle: (title: string) => void;
   setDescription: (description: string) => void;
   setDeadline: (deadline: string) => void;
@@ -30,6 +31,7 @@ interface FormBuilderState {
   removeField: (index: number) => void;
   moveField: (from: number, to: number) => void;
   selectField: (index: number | null) => void;
+  markSaved: () => void;
   loadForm: (data: {
     title: string;
     description?: string | null;
@@ -59,27 +61,30 @@ const initialState = {
   customMessage: "",
   fields: [] as CreateFormFieldInput[],
   selectedFieldIndex: null as number | null,
+  isDirty: false,
 };
 
 export const useFormBuilderStore = create<FormBuilderState>((set) => ({
   ...initialState,
-  setTitle: (title) => set({ title }),
-  setDescription: (description) => set({ description }),
-  setDeadline: (deadline) => set({ deadline }),
-  setAllowLate: (allowLate) => set({ allowLate }),
-  setMaxSubmissions: (maxSubmissions) => set({ maxSubmissions }),
-  setAllowEdit: (allowEdit) => set({ allowEdit }),
-  setCollectEmail: (collectEmail) => set({ collectEmail }),
-  setSuccessTitle: (successTitle) => set({ successTitle }),
-  setSuccessMessage: (successMessage) => set({ successMessage }),
-  setCustomMessage: (customMessage) => set({ customMessage }),
+  setTitle: (title) => set({ title, isDirty: true }),
+  setDescription: (description) => set({ description, isDirty: true }),
+  setDeadline: (deadline) => set({ deadline, isDirty: true }),
+  setAllowLate: (allowLate) => set({ allowLate, isDirty: true }),
+  setMaxSubmissions: (maxSubmissions) => set({ maxSubmissions, isDirty: true }),
+  setAllowEdit: (allowEdit) => set({ allowEdit, isDirty: true }),
+  setCollectEmail: (collectEmail) => set({ collectEmail, isDirty: true }),
+  setSuccessTitle: (successTitle) => set({ successTitle, isDirty: true }),
+  setSuccessMessage: (successMessage) => set({ successMessage, isDirty: true }),
+  setCustomMessage: (customMessage) => set({ customMessage, isDirty: true }),
   addField: (field) =>
     set((state) => ({
       fields: [...state.fields, { ...field, order: state.fields.length }],
+      isDirty: true,
     })),
   updateField: (index, field) =>
     set((state) => ({
       fields: state.fields.map((f, i) => (i === index ? { ...f, ...field } : f)),
+      isDirty: true,
     })),
   removeField: (index) =>
     set((state) => ({
@@ -87,15 +92,17 @@ export const useFormBuilderStore = create<FormBuilderState>((set) => ({
         .filter((_, i) => i !== index)
         .map((f, i) => ({ ...f, order: i })),
       selectedFieldIndex: state.selectedFieldIndex === index ? null : state.selectedFieldIndex,
+      isDirty: true,
     })),
   moveField: (from, to) =>
     set((state) => {
       const fields = [...state.fields];
       const [moved] = fields.splice(from, 1);
       fields.splice(to, 0, moved);
-      return { fields: fields.map((f, i) => ({ ...f, order: i })) };
+      return { fields: fields.map((f, i) => ({ ...f, order: i })), isDirty: true };
     }),
   selectField: (selectedFieldIndex) => set({ selectedFieldIndex }),
+  markSaved: () => set({ isDirty: false }),
   loadForm: (data) =>
     set({
       title: data.title,
@@ -110,6 +117,7 @@ export const useFormBuilderStore = create<FormBuilderState>((set) => ({
       customMessage: data.customMessage ?? "",
       fields: data.fields,
       selectedFieldIndex: null,
+      isDirty: false,
     }),
   reset: () => set(initialState),
 }));

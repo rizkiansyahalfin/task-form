@@ -7,6 +7,7 @@ import {
   Users,
   Clock,
   AlertCircle,
+  AlertTriangle,
   Calendar,
   ExternalLink,
   Loader2,
@@ -18,7 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { format, differenceInHours } from "date-fns";
 import type { StudentFormWithStatus } from "@/types";
 
 import { MentorLayout } from "@/components/layout/mentor-layout";
@@ -247,10 +248,27 @@ interface StudentDashboardProps {
 function StudentDashboard({ name }: StudentDashboardProps) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "revision" | "submitted">("all");
   const { data: formsData, isLoading } = useStudentForms({ page, search });
 
   const forms = formsData?.forms || [];
   const meta = formsData?.meta;
+
+  // Client-side filter by status
+  const filteredForms = forms.filter((form) => {
+    if (statusFilter === "pending") return !form.hasSubmitted;
+    if (statusFilter === "revision") return form.submissionStatus === "REVISION";
+    if (statusFilter === "submitted") return form.hasSubmitted;
+    return true;
+  });
+
+  // Count per filter category
+  const counts = {
+    all: forms.length,
+    pending: forms.filter((f) => !f.hasSubmitted).length,
+    revision: forms.filter((f) => f.submissionStatus === "REVISION").length,
+    submitted: forms.filter((f) => f.hasSubmitted).length,
+  };
 
   const handleSignOut = () => {
     signOut({
@@ -332,18 +350,51 @@ function StudentDashboard({ name }: StudentDashboardProps) {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="flex items-center gap-3 max-w-md bg-card p-1.5 rounded-lg border shadow-sm">
-          <Search className="h-4 w-4 text-muted-foreground ml-2.5" />
-          <Input
-            placeholder="Cari formulir tugas..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2"
-          />
+        {/* Search Bar + Filters */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 max-w-md bg-card p-1.5 rounded-lg border shadow-sm">
+            <Search className="h-4 w-4 text-muted-foreground ml-2.5" />
+            <Input
+              placeholder="Cari formulir tugas..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2"
+            />
+          </div>
+
+          {/* Status Filter Pills */}
+          {!isLoading && forms.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {([
+                { key: "all", label: "Semua" },
+                { key: "pending", label: "Belum Dikumpulkan" },
+                { key: "revision", label: "Perlu Revisi" },
+                { key: "submitted", label: "Sudah Dikumpulkan" },
+              ] as const).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => { setStatusFilter(key); setPage(1); }}
+                  className={[
+                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border transition-colors",
+                    statusFilter === key
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:text-foreground",
+                  ].join(" ")}
+                >
+                  {label}
+                  <span className={[
+                    "inline-flex items-center justify-center rounded-full w-4 h-4 text-[10px] font-bold",
+                    statusFilter === key ? "bg-white/20" : "bg-muted",
+                  ].join(" ")}>
+                    {counts[key]}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Task Forms Section */}
@@ -367,21 +418,30 @@ function StudentDashboard({ name }: StudentDashboardProps) {
                 </Card>
               ))}
             </div>
-          ) : forms.length === 0 ? (
+          ) : filteredForms.length === 0 ? (
             <Card className="flex flex-col items-center justify-center p-12 text-center bg-card border-dashed border-2">
               <FileText className="h-16 w-16 text-muted-foreground/30 mb-4" />
-              <CardTitle className="text-xl">Tidak ada tugas saat ini</CardTitle>
+              <CardTitle className="text-xl">
+                {statusFilter === "all" ? "Tidak ada tugas saat ini" : "Tidak ada formulir di kategori ini"}
+              </CardTitle>
               <CardDescription className="max-w-sm mt-2">
                 {search
                   ? "Formulir tugas yang Anda cari tidak ditemukan."
+                  : statusFilter !== "all"
+                  ? "Coba pilih filter lain untuk melihat formulir lainnya."
                   : "Belum ada formulir tugas yang diterbitkan oleh mentor saat ini. Hubungi mentor Anda jika ini kesalahan."}
               </CardDescription>
             </Card>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {forms.map((form) => {
+              {filteredForms.map((form) => {
                 const isDeadlinePassed = form.deadline ? new Date() > new Date(form.deadline) : false;
                 const isClosed = isDeadlinePassed && !form.allowLate;
+                const hoursUntilDeadline = form.deadline && !isDeadlinePassed
+                  ? differenceInHours(new Date(form.deadline), new Date())
+                  : null;
+                const isDeadlineCritical = hoursUntilDeadline !== null && hoursUntilDeadline <= 24;
+                const isDeadlineWarning = hoursUntilDeadline !== null && hoursUntilDeadline <= 48 && !isDeadlineCritical;
 
                 return (
                   <Card key={form.id} className="flex flex-col justify-between hover:shadow-md transition-shadow bg-card">
@@ -407,14 +467,28 @@ function StudentDashboard({ name }: StudentDashboardProps) {
                       </div>
 
                       <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-3.5 w-3.5 text-blue-500" />
-                          <span>
-                            {form.deadline
-                              ? `Deadline: ${format(new Date(form.deadline), "PPp")}`
-                              : "Tanpa Tenggat Waktu"}
-                          </span>
-                        </div>
+                        <div className={[
+                            "flex items-center gap-2",
+                            isDeadlineCritical ? "text-red-600 dark:text-red-400 font-semibold" : "",
+                            isDeadlineWarning ? "text-amber-600 dark:text-amber-400 font-medium" : "",
+                          ].join(" ")}>
+                            {isDeadlineCritical ? (
+                              <AlertTriangle className="h-3.5 w-3.5 animate-pulse" />
+                            ) : isDeadlineWarning ? (
+                              <Clock className="h-3.5 w-3.5" />
+                            ) : (
+                              <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                            )}
+                            <span>
+                              {form.deadline
+                                ? isDeadlineCritical
+                                  ? `Tenggat dalam ${hoursUntilDeadline} jam!`
+                                  : isDeadlineWarning
+                                  ? `Tenggat dalam ${hoursUntilDeadline} jam`
+                                  : `Tenggat: ${format(new Date(form.deadline), "PPp")}`
+                                : "Tanpa Tenggat Waktu"}
+                            </span>
+                          </div>
                         {isDeadlinePassed && form.allowLate && !form.hasSubmitted && (
                           <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-medium">
                             <AlertCircle className="h-3.5 w-3.5" />
