@@ -12,8 +12,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +27,9 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { usePublicForm, useSubmitForm } from "@/hooks/use-forms";
+import { useStudentSubmission } from "@/hooks/use-submissions";
 import { useSession } from "@/lib/auth-client";
+import type { FormFieldWithOptions, FormFieldOptionItem, SubmissionAnswerItem, SubmissionFileItem } from "@/types";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -38,6 +42,12 @@ export default function PublicFormPage({ params }: PageProps) {
   const { data: form, isLoading, error } = usePublicForm(slug);
   const submitFormMutation = useSubmitForm(slug);
   const { data: session } = useSession();
+
+  // Check if student is logged in and fetch their submission
+  const isLoggedInStudent = session?.user && (session.user as { role?: string }).role === "student";
+  const { data: studentSubmission, isLoading: isSubmissionLoading } = useStudentSubmission({
+    slug: isLoggedInStudent ? slug : undefined,
+  });
 
   // Form State
   const [email, setEmail] = useState("");
@@ -210,7 +220,7 @@ export default function PublicFormPage({ params }: PageProps) {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isSubmissionLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-950">
         <Card className="w-full max-w-2xl">
@@ -240,6 +250,160 @@ export default function PublicFormPage({ params }: PageProps) {
             </CardDescription>
           </CardHeader>
         </Card>
+      </div>
+    );
+  }
+
+  if (studentSubmission) {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 py-10 px-4">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <Card>
+            <CardHeader className="text-center pb-6">
+              <CardTitle className="text-2xl font-bold tracking-tight">{form.title}</CardTitle>
+              {form.description && (
+                <CardDescription className="mt-2 text-sm">
+                  {form.description}
+                </CardDescription>
+              )}
+            </CardHeader>
+          </Card>
+
+          {/* Status Alert Banner */}
+          {studentSubmission.status === "COMPLETED" && (
+            <Alert className="bg-green-50 border-green-200 text-green-800 dark:bg-green-950/20 dark:text-green-400 dark:border-green-900/50">
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <AlertTitle className="font-semibold text-green-800 dark:text-green-400">Tugas Selesai</AlertTitle>
+              <AlertDescription className="text-xs">
+                Tugas Anda telah diperiksa dan disetujui oleh mentor. Kerja bagus!
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {studentSubmission.status === "REVIEWED" && (
+            <Alert className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/50">
+              <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertTitle className="font-semibold text-blue-850 dark:text-blue-400">Tugas Ditinjau</AlertTitle>
+              <AlertDescription className="text-xs">
+                Tugas Anda telah dikumpulkan dan sedang dalam peninjauan oleh mentor.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {studentSubmission.status === "REVISION" && (
+            <Alert className="bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/50">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 animate-pulse" />
+              <AlertTitle className="font-semibold text-amber-800 dark:text-amber-400">Perlu Revisi</AlertTitle>
+              <AlertDescription className="text-xs">
+                Mentor meminta revisi untuk tugas ini. Silakan periksa masukan atau hubungi mentor Anda.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {(studentSubmission.status === "SUBMITTED" || studentSubmission.status === "LATE") && (
+            <Alert className="bg-zinc-100 border-zinc-200 text-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400 dark:border-zinc-800">
+              <FileCheck className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+              <AlertTitle className="font-semibold text-zinc-800 dark:text-zinc-400">Sudah Dikumpulkan</AlertTitle>
+              <AlertDescription className="text-xs">
+                Tugas telah dikumpulkan pada {format(new Date(studentSubmission.submittedAt), "PPp")}.
+                {studentSubmission.status === "LATE" && " (Terlambat)"}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Submission Details */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold tracking-tight px-1">Jawaban Anda</h3>
+            {form.fields.map((field: FormFieldWithOptions) => {
+              if (["HEADING", "DIVIDER"].includes(field.type)) {
+                if (field.type === "HEADING") {
+                  return (
+                    <h4 key={field.id} className="text-base font-bold pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
+                      {field.label}
+                    </h4>
+                  );
+                }
+                return <Separator key={field.id} className="my-6" />;
+              }
+
+              const answer = studentSubmission.answers.find((a: SubmissionAnswerItem) => a.fieldId === field.id);
+              const answerFiles = studentSubmission.files.filter((f: SubmissionFileItem) => f.fieldId === field.id);
+
+              return (
+                <Card key={field.id} className="bg-card">
+                  <CardHeader className="pb-3">
+                    <Label className="text-sm font-semibold">{field.label}</Label>
+                    {field.description && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{field.description}</p>
+                    )}
+                  </CardHeader>
+                  <CardContent className="text-sm">
+                    {/* Render Text / Short text / Paragraph / Select */}
+                    {answer?.value && !["RADIO", "CHECKBOX", "DROPDOWN", "FILE_UPLOAD", "IMAGE_UPLOAD"].includes(field.type) && (
+                      <p className="p-3 border rounded-lg bg-zinc-50/50 dark:bg-zinc-900/20 whitespace-pre-wrap">
+                        {answer.value}
+                      </p>
+                    )}
+
+                    {/* Dropdown / Radio */}
+                    {["RADIO", "DROPDOWN"].includes(field.type) && answer?.value && (
+                      <p className="p-3 border rounded-lg bg-zinc-50/50 dark:bg-zinc-900/20">
+                        {field.options?.find((opt: FormFieldOptionItem) => opt.value === answer.value)?.label || answer.value}
+                      </p>
+                    )}
+
+                    {field.type === "CHECKBOX" && answer && answer.values && answer.values.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {answer.values.map((v: string, idx: number) => {
+                          const optionLabel = field.options?.find((opt: FormFieldOptionItem) => opt.value === v)?.label || v;
+                          return (
+                            <Badge key={idx} variant="secondary" className="text-xs">
+                              {optionLabel}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Files */}
+                    {answerFiles.length > 0 && (
+                      <div className="space-y-2">
+                        {answerFiles.map((file: SubmissionFileItem) => (
+                          <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg bg-zinc-50/50 dark:bg-zinc-900/20">
+                            <div className="flex items-center gap-2 truncate pr-4">
+                              <FileCheck className="h-5 w-5 text-green-600 shrink-0" />
+                              <span className="truncate font-medium text-xs">{file.fileName}</span>
+                            </div>
+                            {file.url && (
+                              <Link href={file.url} target="_blank">
+                                <Button variant="outline" size="sm" className="h-7 text-xs">
+                                  Unduh
+                                </Button>
+                              </Link>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Empty state for this field */}
+                    {!answer?.value && (!answer?.values || answer.values.length === 0) && answerFiles.length === 0 && (
+                      <p className="text-xs text-muted-foreground italic">Tidak ada jawaban.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          <div className="text-center pt-4">
+            <Link href="/dashboard">
+              <Button variant="outline" className="w-full sm:w-auto">
+                Kembali ke Dashboard
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }

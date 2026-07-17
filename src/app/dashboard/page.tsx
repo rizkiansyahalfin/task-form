@@ -13,11 +13,13 @@ import {
   LogOut,
   Search,
   BookOpen,
-  ArrowRight
+  ArrowRight,
+  Eye
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import type { StudentFormWithStatus } from "@/types";
 
 import { MentorLayout } from "@/components/layout/mentor-layout";
 import { Button } from "@/components/ui/button";
@@ -260,6 +262,29 @@ function StudentDashboard({ name }: StudentDashboardProps) {
     });
   };
 
+  const getSubmissionStatusBadge = (form: StudentFormWithStatus) => {
+    if (!form.hasSubmitted) {
+      return (
+        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400">
+          Belum Mengumpulkan
+        </Badge>
+      );
+    }
+
+    switch (form.submissionStatus) {
+      case "COMPLETED":
+        return <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100 dark:bg-green-950 dark:text-green-300">Selesai</Badge>;
+      case "REVIEWED":
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300">Ditinjau</Badge>;
+      case "REVISION":
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-100 dark:bg-yellow-950 dark:text-yellow-300 animate-pulse">Perlu Revisi</Badge>;
+      case "LATE":
+        return <Badge variant="destructive">Terlambat</Badge>;
+      default:
+        return <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100 dark:bg-green-950 dark:text-green-300">Sudah Mengumpulkan</Badge>;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col">
       {/* Top Header */}
@@ -363,8 +388,8 @@ function StudentDashboard({ name }: StudentDashboardProps) {
                     <CardHeader className="pb-4">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between gap-2">
-                          <CardTitle className="line-clamp-1 text-base font-bold">{form.title}</CardTitle>
-                          {isClosed ? (
+                          <CardTitle className="line-clamp-1 text-base font-bold" title={form.title}>{form.title}</CardTitle>
+                          {isClosed && !form.hasSubmitted ? (
                             <Badge variant="destructive" className="text-xs rounded-full">Tutup</Badge>
                           ) : (
                             <Badge variant="default" className="bg-green-600 text-white text-xs rounded-full hover:bg-green-600">Aktif</Badge>
@@ -376,7 +401,12 @@ function StudentDashboard({ name }: StudentDashboardProps) {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4 pt-0 border-t border-zinc-100 dark:border-zinc-800/50 mt-2">
-                      <div className="flex flex-col gap-1.5 text-xs text-muted-foreground pt-4">
+                      <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/50 pb-3 mb-2 text-xs pt-4">
+                        <span className="text-muted-foreground">Status Tugas:</span>
+                        {getSubmissionStatusBadge(form)}
+                      </div>
+
+                      <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-3.5 w-3.5 text-blue-500" />
                           <span>
@@ -385,7 +415,7 @@ function StudentDashboard({ name }: StudentDashboardProps) {
                               : "Tanpa Tenggat Waktu"}
                           </span>
                         </div>
-                        {isDeadlinePassed && form.allowLate && (
+                        {isDeadlinePassed && form.allowLate && !form.hasSubmitted && (
                           <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-medium">
                             <AlertCircle className="h-3.5 w-3.5" />
                             <span>Mengizinkan pengumpulan terlambat</span>
@@ -396,11 +426,12 @@ function StudentDashboard({ name }: StudentDashboardProps) {
                       <Link href={`/public/form/${form.slug}`} target="_blank" className="block w-full">
                         <Button
                           className="w-full gap-1.5 justify-center mt-2 group text-sm font-semibold"
-                          variant={isClosed ? "outline" : "default"}
-                          disabled={isClosed}
+                          variant={form.hasSubmitted ? "outline" : isClosed ? "outline" : "default"}
+                          disabled={isClosed && !form.hasSubmitted}
                         >
-                          {isClosed ? "Pengumpulan Ditutup" : "Mulai Mengerjakan"}
-                          {!isClosed && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                          {form.hasSubmitted ? "Lihat Pengumpulan" : isClosed ? "Pengumpulan Ditutup" : "Mulai Mengerjakan"}
+                          {!isClosed && !form.hasSubmitted && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                          {form.hasSubmitted && <Eye className="h-4 w-4 transition-transform group-hover:scale-110" />}
                         </Button>
                       </Link>
                     </CardContent>

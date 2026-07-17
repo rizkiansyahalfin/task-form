@@ -1,5 +1,6 @@
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { formRepository } from "@/repositories/form.repository";
+import { submissionRepository } from "@/repositories/submission.repository";
 import type { CreateFormInput, PaginationParams, UpdateFormInput } from "@/types";
 import { generateSlug } from "@/utils";
 
@@ -70,6 +71,49 @@ export class FormService {
 
   async listPublishedForms(params: PaginationParams) {
     return formRepository.findPublished(params);
+  }
+
+  async getFormProgress(formId: string, mentorId: string) {
+    // Verify form exists and belongs to the mentor
+    await this.getForm(formId, mentorId);
+
+    // Fetch all student accounts
+    const students = await formRepository.findAllStudents();
+    const emails = students.map((s) => s.email).filter(Boolean) as string[];
+
+    // Fetch submissions for this form and these students
+    const submissions = await submissionRepository.findByFormAndEmails(formId, emails);
+
+    // Map student email to their latest submission
+    const submissionMap = new Map<string, typeof submissions[0]>();
+    for (const sub of submissions) {
+      if (sub.email && !submissionMap.has(sub.email)) {
+        submissionMap.set(sub.email, sub);
+      }
+    }
+
+    const progress = students.map((student) => {
+      const sub = student.email ? submissionMap.get(student.email) : null;
+      return {
+        id: student.id,
+        name: student.name,
+        email: student.email,
+        image: student.image,
+        hasSubmitted: !!sub,
+        submissionStatus: sub?.status ?? null,
+        submittedAt: sub?.submittedAt ?? null,
+        submissionId: sub?.id ?? null,
+      };
+    });
+
+    const submittedCount = progress.filter((p) => p.hasSubmitted).length;
+
+    return {
+      formId,
+      totalStudents: students.length,
+      submittedCount,
+      progress,
+    };
   }
 }
 

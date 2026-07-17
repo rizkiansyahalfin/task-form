@@ -87,6 +87,8 @@ export interface SubmissionWithAnswers {
   formId: string;
   status: SubmissionStatus;
   email: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
   submittedAt: Date;
   updatedAt: Date;
   answers: SubmissionAnswerItem[];
@@ -177,4 +179,29 @@ export interface AuthUser {
   email: string;
   image: string | null;
   role: string;
+}
+
+export interface FormProgressItem {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  hasSubmitted: boolean;
+  submissionStatus: SubmissionStatus | null;
+  submittedAt: Date | null;
+  submissionId: string | null;
+}
+
+export interface FormProgressSummary {
+  formId: string;
+  totalStudents: number;
+  submittedCount: number;
+  progress: FormProgressItem[];
+}
+
+export interface StudentFormWithStatus extends FormWithFields {
+  hasSubmitted: boolean;
+  submissionStatus: SubmissionStatus | null;
+  submittedAt: Date | null;
+  submissionId: string | null;
 }

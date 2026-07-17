@@ -1,4 +1,5 @@
-import type { SubmissionStatus } from "@prisma/client";
+import type { SubmissionStatus, Prisma } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { storage } from "@/lib/storage";
 import { formRepository } from "@/repositories/form.repository";
@@ -128,6 +129,56 @@ export class SubmissionService {
       throw new NotFoundError("Submission not found");
     }
     return submissionRepository.softDelete(id);
+  }
+
+  async getStudentSubmission(email: string, query: { formId?: string; slug?: string }) {
+    if (!query.formId && !query.slug) {
+      throw new ValidationError("formId or slug is required");
+    }
+
+    const whereClause: Prisma.SubmissionWhereInput = {
+      email,
+      deletedAt: null,
+    };
+
+    if (query.formId) {
+      whereClause.formId = query.formId;
+    } else if (query.slug) {
+      whereClause.form = { slug: query.slug, deletedAt: null };
+    }
+
+    const submission = await prisma.submission.findFirst({
+      where: whereClause,
+      include: {
+        answers: {
+          include: {
+            field: {
+              select: { label: true, type: true },
+            },
+          },
+        },
+        files: true,
+        form: {
+          select: { title: true, slug: true },
+        },
+      },
+      orderBy: {
+        submittedAt: "desc",
+      },
+    });
+
+    if (!submission) {
+      return null;
+    }
+
+    const filesWithUrls = await Promise.all(
+      submission.files.map(async (file) => ({
+        ...file,
+        url: await storage.getSignedDownloadUrl(file.fileKey),
+      })),
+    );
+
+    return { ...submission, files: filesWithUrls };
   }
 }
 

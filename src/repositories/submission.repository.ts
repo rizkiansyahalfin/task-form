@@ -161,6 +161,27 @@ export class SubmissionRepository {
     });
   }
 
+  async findByFormAndEmails(formId: string, emails: string[]) {
+    return prisma.submission.findMany({
+      where: {
+        formId,
+        deletedAt: null,
+        email: {
+          in: emails,
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        status: true,
+        submittedAt: true,
+      },
+      orderBy: {
+        submittedAt: "desc",
+      },
+    });
+  }
+
   async softDelete(id: string) {
     return prisma.submission.update({
       where: { id },

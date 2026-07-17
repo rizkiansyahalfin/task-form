@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { apiFetch } from "@/lib/api-client";
-import type { DashboardStats, FormWithFields, PaginationMeta } from "@/types";
+import type { DashboardStats, FormWithFields, PaginationMeta, FormProgressSummary, StudentFormWithStatus } from "@/types";
 
 export function useDashboardStats() {
   return useQuery({
@@ -149,8 +149,19 @@ export function useStudentForms(params?: { page?: number; limit?: number; search
   return useQuery({
     queryKey: ["student-forms", params],
     queryFn: async () => {
-      const res = await apiFetch<FormWithFields[]>(`/api/student/forms?${searchParams}`);
+      const res = await apiFetch<StudentFormWithStatus[]>(`/api/student/forms?${searchParams}`);
       return { forms: res.data!, meta: res.meta as PaginationMeta };
     },
+  });
+}
+
+export function useFormProgress(formId: string) {
+  return useQuery({
+    queryKey: ["form-progress", formId],
+    queryFn: async () => {
+      const res = await apiFetch<FormProgressSummary>(`/api/forms/${formId}/progress`);
+      return res.data!;
+    },
+    enabled: !!formId,
   });
 }

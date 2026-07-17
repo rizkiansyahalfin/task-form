@@ -12,7 +12,8 @@ import {
   Calendar,
   ClipboardList,
   Edit,
-  XCircle
+  XCircle,
+  Users
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -176,14 +177,21 @@ export default function FormsPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+                  <div className={`grid ${form.status === "PUBLISHED" ? "grid-cols-3" : "grid-cols-2"} gap-2 pt-2 border-t`}>
                     <Link href={`/submissions?formId=${form.id}`} className="w-full">
-                      <Button variant="outline" size="sm" className="w-full gap-1.5 justify-center">
+                      <Button variant="outline" size="xs" className="w-full gap-1 justify-center px-1 text-xs">
                         <Eye className="h-3.5 w-3.5" /> Submissions
                       </Button>
                     </Link>
+                    {form.status === "PUBLISHED" && (
+                      <Link href={`/forms/${form.id}/progress`} className="w-full">
+                        <Button variant="outline" size="xs" className="w-full gap-1 justify-center px-1 text-xs">
+                          <Users className="h-3.5 w-3.5" /> Progress
+                        </Button>
+                      </Link>
+                    )}
                     <Link href={`/public/form/${form.slug}`} target="_blank" className="w-full">
-                      <Button variant="outline" size="sm" className="w-full gap-1.5 justify-center text-blue-600 dark:text-blue-400">
+                      <Button variant="outline" size="xs" className="w-full gap-1 justify-center text-blue-600 dark:text-blue-400 px-1 text-xs">
                         <ExternalLink className="h-3.5 w-3.5" /> Live Form
                       </Button>
                     </Link>

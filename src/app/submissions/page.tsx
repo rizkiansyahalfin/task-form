@@ -3,19 +3,9 @@
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  FileText,
-  Users,
-  Search,
-  ExternalLink,
   Trash,
-  CheckCircle,
   Eye,
-  Calendar,
-  AlertCircle,
   Download,
-  Check,
-  RotateCcw,
-  RefreshCw,
   FolderOpen
 } from "lucide-react";
 import { toast } from "sonner";
@@ -23,12 +13,12 @@ import { format } from "date-fns";
 
 import { MentorLayout } from "@/components/layout/mentor-layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import type { SubmissionStatus, SubmissionWithAnswers, SubmissionAnswerItem, SubmissionFileItem } from "@/types";
 import { useForms } from "@/hooks/use-forms";
 import { useSubmissions, useSubmission, useUpdateSubmissionStatus, useDeleteSubmission } from "@/hooks/use-submissions";
 
@@ -41,7 +31,7 @@ function SubmissionsContent() {
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
 
   // Queries
-  const { data: formsData, isLoading: isFormsLoading } = useForms();
+  const { data: formsData } = useForms();
   const { data: subsData, isLoading: isSubsLoading, refetch } = useSubmissions({
     page,
     formId: formId === "all" ? undefined : formId
@@ -55,7 +45,7 @@ function SubmissionsContent() {
   const submissions = subsData?.submissions || [];
   const meta = subsData?.meta;
 
-  const handleStatusChange = async (id: string, nextStatus: any) => {
+  const handleStatusChange = async (id: string, nextStatus: SubmissionStatus) => {
     try {
       await updateStatusMutation.mutateAsync({ id, status: nextStatus });
       toast.success("Submission status updated successfully!");
@@ -156,7 +146,7 @@ function SubmissionsContent() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {submissions.map((sub: any) => (
+                  {submissions.map((sub: SubmissionWithAnswers) => (
                     <tr key={sub.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors">
                       <td className="px-6 py-4 font-medium">
                         {sub.email || <span className="text-muted-foreground italic">Anonymous ({sub.ipAddress})</span>}
@@ -231,7 +221,7 @@ function SubmissionsContent() {
                 {/* Answers Section */}
                 <div className="space-y-4">
                   <h3 className="font-semibold border-b pb-2">Student Answers</h3>
-                  {currentSubmission?.answers?.map((ans: any) => (
+                  {currentSubmission?.answers?.map((ans: SubmissionAnswerItem) => (
                     <div key={ans.id} className="space-y-1.5 border-l-2 pl-3 py-1">
                       <p className="text-xs font-semibold text-muted-foreground">
                         {ans.field?.label || "Question"}
@@ -250,7 +240,7 @@ function SubmissionsContent() {
                   <div className="space-y-3">
                     <h3 className="font-semibold border-b pb-2">Uploaded Files</h3>
                     <div className="grid gap-2">
-                      {currentSubmission.files.map((file: any) => (
+                      {currentSubmission.files?.map((file: SubmissionFileItem) => (
                         <div
                           key={file.id}
                           className="flex items-center justify-between border rounded p-3 text-sm bg-zinc-50 dark:bg-zinc-900"
@@ -280,7 +270,7 @@ function SubmissionsContent() {
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                     <Select
                       value={currentSubmission?.status}
-                      onValueChange={(val) => handleStatusChange(currentSubmission.id, val)}
+                      onValueChange={(val) => currentSubmission && handleStatusChange(currentSubmission.id, val as SubmissionStatus)}
                       disabled={updateStatusMutation.isPending}
                     >
                       <SelectTrigger className="w-[200px]">
@@ -297,7 +287,7 @@ function SubmissionsContent() {
                     <Button
                       variant="destructive"
                       className="sm:ml-auto gap-1"
-                      onClick={() => handleDelete(currentSubmission.id)}
+                      onClick={() => currentSubmission && handleDelete(currentSubmission.id)}
                       disabled={deleteSubMutation.isPending}
                     >
                       <Trash className="h-4 w-4" /> Delete Submission

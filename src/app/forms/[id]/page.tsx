@@ -14,7 +14,8 @@ import {
   Loader2,
   ExternalLink,
   CheckCircle,
-  XCircle
+  XCircle,
+  Users
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -269,6 +270,11 @@ export default function FormDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-2">
             {form.status === "PUBLISHED" && (
               <>
+                <Link href={`/forms/${id}/progress`}>
+                  <Button variant="outline" className="gap-2">
+                    <Users className="h-4 w-4" /> View Progress
+                  </Button>
+                </Link>
                 <Link href={`/public/form/${form.slug}`} target="_blank">
                   <Button variant="outline" className="gap-2">
                     <ExternalLink className="h-4 w-4" /> View Live

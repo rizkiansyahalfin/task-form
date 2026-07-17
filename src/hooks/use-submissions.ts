@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { apiFetch } from "@/lib/api-client";
-import type { SubmissionStatus } from "@/types";
+import type { SubmissionStatus, SubmissionWithAnswers } from "@/types";
 
 export function useSubmissions(params?: { page?: number; formId?: string; status?: string }) {
   const searchParams = new URLSearchParams();
@@ -14,7 +14,7 @@ export function useSubmissions(params?: { page?: number; formId?: string; status
   return useQuery({
     queryKey: ["submissions", params],
     queryFn: async () => {
-      const res = await apiFetch<any[]>(`/api/submissions?${searchParams}`);
+      const res = await apiFetch<SubmissionWithAnswers[]>(`/api/submissions?${searchParams}`);
       return { submissions: res.data!, meta: res.meta };
     },
   });
@@ -24,7 +24,7 @@ export function useSubmission(id: string) {
   return useQuery({
     queryKey: ["submissions", id],
     queryFn: async () => {
-      const res = await apiFetch<any>(`/api/submissions/${id}`);
+      const res = await apiFetch<SubmissionWithAnswers>(`/api/submissions/${id}`);
       return res.data!;
     },
     enabled: !!id,
@@ -35,7 +35,7 @@ export function useUpdateSubmissionStatus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: SubmissionStatus }) => {
-      const res = await apiFetch<any>(`/api/submissions/${id}`, {
+      const res = await apiFetch<SubmissionWithAnswers>(`/api/submissions/${id}`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
       });
@@ -59,5 +59,22 @@ export function useDeleteSubmission() {
       queryClient.invalidateQueries({ queryKey: ["submissions"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
+  });
+}
+
+export function useStudentSubmission(params: { formId?: string; slug?: string }) {
+  const searchParams = new URLSearchParams();
+  if (params.formId) searchParams.set("formId", params.formId);
+  if (params.slug) searchParams.set("slug", params.slug);
+
+  const enabled = !!params.formId || !!params.slug;
+
+  return useQuery({
+    queryKey: ["student-submission", params],
+    queryFn: async () => {
+      const res = await apiFetch<SubmissionWithAnswers | null>(`/api/student/submissions?${searchParams}`);
+      return res.data;
+    },
+    enabled,
   });
 }

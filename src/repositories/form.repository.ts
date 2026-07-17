@@ -293,6 +293,24 @@ export class FormRepository {
       where: { mentorId, deletedAt: null },
     });
   }
+
+  async findAllStudents() {
+    return prisma.user.findMany({
+      where: {
+        role: "student",
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+  }
 }
 
 export const formRepository = new FormRepository();
