@@ -35,7 +35,7 @@ export default function Home() {
 
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-balance leading-tight">
             Kelola Tugas Santri{" "}
-            <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-primary to-blue-600 bg-clip-text text-transparent">
               Mudah &amp; Terstruktur
             </span>
           </h1>

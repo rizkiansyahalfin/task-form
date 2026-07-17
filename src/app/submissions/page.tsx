@@ -48,23 +48,28 @@ function SubmissionsContent() {
   const handleStatusChange = async (id: string, nextStatus: SubmissionStatus) => {
     try {
       await updateStatusMutation.mutateAsync({ id, status: nextStatus });
-      toast.success("Submission status updated successfully!");
+      toast.success("Status pengumpulan berhasil diperbarui!");
       refetch();
     } catch {
-      toast.error("Failed to update status");
+      toast.error("Gagal memperbarui status");
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this submission?")) return;
+    if (!confirm("Apakah Anda yakin ingin menghapus pengumpulan ini?")) return;
     try {
       await deleteSubMutation.mutateAsync(id);
-      toast.success("Submission deleted successfully!");
+      toast.success("Pengumpulan berhasil dihapus!");
       setSelectedSubId(null);
       refetch();
     } catch {
-      toast.error("Failed to delete submission");
+      toast.error("Gagal menghapus pengumpulan");
     }
+  };
+
+  const handleExportCSV = () => {
+    const url = `/api/submissions/export?formId=${formId}`;
+    window.open(url, "_blank");
   };
 
   const getStatusBadge = (status: string) => {
@@ -72,7 +77,7 @@ function SubmissionsContent() {
       case "COMPLETED":
         return <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100 dark:bg-green-950 dark:text-green-300">Selesai</Badge>;
       case "REVIEWED":
-        return <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300">Ditinjau</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100 dark:bg-blue-950 dark:text-green-300">Ditinjau</Badge>;
       case "REVISION":
         return <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100 dark:bg-amber-950 dark:text-amber-300">Perlu Revisi</Badge>;
       case "LATE":
@@ -93,27 +98,32 @@ function SubmissionsContent() {
               Tinjau dan nilai pengumpulan dari santri Anda.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground">Filter berdasarkan Formulir:</span>
-            <Select
-              value={formId}
-              onValueChange={(val) => {
-                setFormId(val || "all");
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-[260px]">
-                <SelectValue placeholder="All Forms" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Formulir</SelectItem>
-                {forms.map((f) => (
-                  <SelectItem key={f.id} value={f.id}>
-                    {f.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Filter berdasarkan Formulir:</span>
+              <Select
+                value={formId}
+                onValueChange={(val) => {
+                  setFormId(val || "all");
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="w-[260px]">
+                  <SelectValue placeholder="Semua Formulir" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Formulir</SelectItem>
+                  {forms.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleExportCSV} variant="outline" className="gap-2">
+              <Download className="h-4 w-4" /> Ekspor CSV
+            </Button>
           </div>
         </div>
 

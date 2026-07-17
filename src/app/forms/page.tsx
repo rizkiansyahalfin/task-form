@@ -42,32 +42,32 @@ export default function FormsPage() {
   const handlePublish = async (id: string) => {
     try {
       await publishFormMutation.mutateAsync(id);
-      toast.success("Form published successfully!");
+      toast.success("Formulir berhasil diterbitkan!");
       refetch();
     } catch {
-      toast.error("Failed to publish form");
+      toast.error("Gagal menerbitkan formulir");
     }
   };
 
   const handleUnpublish = async (id: string) => {
-    if (!confirm("Are you sure you want to unpublish this form? It will be reverted to draft status.")) return;
+    if (!confirm("Apakah Anda yakin ingin mencabut publikasi formulir ini? Status akan kembali menjadi draft.")) return;
     try {
       await unpublishFormMutation.mutateAsync(id);
-      toast.success("Form unpublished successfully!");
+      toast.success("Formulir berhasil dicabut publikasinya!");
       refetch();
     } catch {
-      toast.error("Failed to unpublish form");
+      toast.error("Gagal mencabut publikasi formulir");
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this form?")) return;
+    if (!confirm("Apakah Anda yakin ingin menghapus formulir ini?")) return;
     try {
       await deleteFormMutation.mutateAsync(id);
-      toast.success("Form deleted successfully!");
+      toast.success("Formulir berhasil dihapus!");
       refetch();
     } catch {
-      toast.error("Failed to delete form");
+      toast.error("Gagal menghapus formulir");
     }
   };
 
@@ -77,14 +77,14 @@ export default function FormsPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Form Tasks</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Formulir Tugas</h1>
             <p className="text-muted-foreground">
-              Manage your tasks and review student submission forms.
+              Kelola tugas dan tinjau formulir pengumpulan santri Anda.
             </p>
           </div>
           <Link href="/forms/new">
             <Button className="gap-2">
-              <Plus className="h-4 w-4" /> Create New Form
+              <Plus className="h-4 w-4" /> Buat Formulir Baru
             </Button>
           </Link>
         </div>
@@ -94,7 +94,7 @@ export default function FormsPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search forms..."
+              placeholder="Cari formulir..."
               className="pl-9"
               value={search}
               onChange={(e) => {
@@ -124,13 +124,13 @@ export default function FormsPage() {
         ) : forms.length === 0 ? (
           <Card className="flex flex-col items-center justify-center p-12 text-center">
             <FileText className="h-16 w-16 text-muted-foreground/30 mb-4" />
-            <CardTitle className="text-xl">No forms found</CardTitle>
+            <CardTitle className="text-xl">Formulir tidak ditemukan</CardTitle>
             <CardDescription className="max-w-sm mt-2">
-              {search ? "No forms match your search query." : "You haven't created any form tasks yet. Click the button above to get started."}
+              {search ? "Tidak ada formulir yang cocok dengan pencarian Anda." : "Anda belum membuat formulir tugas apa pun. Klik tombol di atas untuk memulai."}
             </CardDescription>
             {!search && (
               <Link href="/forms/new" className="mt-4">
-                <Button>Create First Form</Button>
+                <Button>Buat Formulir Pertama</Button>
               </Link>
             )}
           </Card>
@@ -145,7 +145,7 @@ export default function FormsPage() {
                         <Link href={`/forms/${form.id}`}>{form.title}</Link>
                       </CardTitle>
                       <CardDescription className="line-clamp-2">
-                        {form.description || "No description provided."}
+                        {form.description || "Tidak ada deskripsi."}
                       </CardDescription>
                     </div>
                     <Badge
@@ -157,7 +157,7 @@ export default function FormsPage() {
                           : "destructive"
                       }
                     >
-                      {form.status.toLowerCase()}
+                      {form.status === "PUBLISHED" ? "Diterbitkan" : form.status === "DRAFT" ? "Draft" : "Diarsipkan"}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -167,20 +167,20 @@ export default function FormsPage() {
                       <Calendar className="h-4 w-4" />
                       <span>
                         {form.deadline
-                          ? `Deadline: ${format(new Date(form.deadline), "PPp")}`
-                          : "No deadline"}
+                          ? `Tenggat: ${format(new Date(form.deadline), "PPp")}`
+                          : "Tanpa Tenggat"}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <ClipboardList className="h-4 w-4" />
-                      <span>{form._count?.submissions ?? 0} Submissions</span>
+                      <span>{form._count?.submissions ?? 0} Pengumpulan</span>
                     </div>
                   </div>
 
                   <div className={`grid ${form.status === "PUBLISHED" ? "grid-cols-3" : "grid-cols-2"} gap-2 pt-2 border-t`}>
                     <Link href={`/submissions?formId=${form.id}`} className="w-full">
                       <Button variant="outline" size="xs" className="w-full gap-1 justify-center px-1 text-xs">
-                        <Eye className="h-3.5 w-3.5" /> Submissions
+                        <Eye className="h-3.5 w-3.5" /> Pengumpulan
                       </Button>
                     </Link>
                     {form.status === "PUBLISHED" && (
@@ -192,7 +192,7 @@ export default function FormsPage() {
                     )}
                     <Link href={`/public/form/${form.slug}`} target="_blank" className="w-full">
                       <Button variant="outline" size="xs" className="w-full gap-1 justify-center text-blue-600 dark:text-blue-400 px-1 text-xs">
-                        <ExternalLink className="h-3.5 w-3.5" /> Live Form
+                        <ExternalLink className="h-3.5 w-3.5" /> Lihat Live
                       </Button>
                     </Link>
                   </div>
@@ -210,7 +210,7 @@ export default function FormsPage() {
                         onClick={() => handlePublish(form.id)}
                         disabled={publishFormMutation.isPending}
                       >
-                        <CheckCircle className="h-3.5 w-3.5" /> Publish
+                        <CheckCircle className="h-3.5 w-3.5" /> Terbitkan
                       </Button>
                     ) : (
                       <Button
@@ -220,7 +220,7 @@ export default function FormsPage() {
                         onClick={() => handleUnpublish(form.id)}
                         disabled={unpublishFormMutation.isPending}
                       >
-                        <XCircle className="h-3.5 w-3.5" /> Unpublish
+                        <XCircle className="h-3.5 w-3.5" /> Cabut
                       </Button>
                     )}
                     <Button
@@ -247,10 +247,10 @@ export default function FormsPage() {
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
-              Previous
+              Sebelumnya
             </Button>
             <span className="flex items-center px-4 text-sm font-medium">
-              Page {page} of {meta.totalPages}
+              Halaman {page} dari {meta.totalPages}
             </span>
             <Button
               variant="outline"
@@ -258,7 +258,7 @@ export default function FormsPage() {
               disabled={page >= meta.totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
-              Next
+              Berikutnya
             </Button>
           </div>
         )}

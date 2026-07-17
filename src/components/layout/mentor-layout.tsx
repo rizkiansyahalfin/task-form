@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, ShieldAlert } from "lucide-react";
 
@@ -40,14 +39,14 @@ export function MentorLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Access Denied</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Akses Ditolak</h1>
             <p className="text-muted-foreground">
-              You do not have permission to access the mentor dashboard. This area is reserved for mentors only.
+              Anda tidak memiliki izin untuk mengakses dasbor mentor. Area ini khusus untuk mentor saja.
             </p>
           </div>
           <div className="flex justify-center gap-4">
             <Button variant="outline" onClick={() => router.back()}>
-              Go Back
+              Kembali
             </Button>
             <Button
               onClick={() => {
@@ -63,7 +62,7 @@ export function MentorLayout({ children }: { children: ReactNode }) {
                 });
               }}
             >
-              Sign Out
+              Keluar
             </Button>
           </div>
         </div>

@@ -5,11 +5,12 @@ import { FileText, LayoutDashboard, LogOut, Settings } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth-client";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/forms", label: "Forms", icon: FileText },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Dasbor", icon: LayoutDashboard },
+  { href: "/forms", label: "Formulir", icon: FileText },
+  { href: "/settings", label: "Pengaturan", icon: Settings },
 ];
 
 export function MentorSidebar() {
@@ -32,15 +33,16 @@ export function MentorSidebar() {
           </Link>
         ))}
       </nav>
-      <div className="border-t p-4">
+      <div className="border-t p-4 flex items-center justify-between gap-2">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3"
+          className="flex-1 justify-start gap-3 text-destructive hover:bg-destructive/10"
           onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = "/login"; } } })}
         >
           <LogOut className="h-4 w-4" aria-hidden="true" />
-          Sign out
+          Keluar
         </Button>
+        <ThemeToggle />
       </div>
     </aside>
   );
