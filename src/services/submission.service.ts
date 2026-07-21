@@ -1,10 +1,9 @@
-import type { SubmissionStatus, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { storage } from "@/lib/storage";
 import { formRepository } from "@/repositories/form.repository";
 import { submissionRepository } from "@/repositories/submission.repository";
-import type { DashboardStats, PaginationParams, SubmitFormInput } from "@/types";
+import type { DashboardStats, PaginationParams, SubmitFormInput, SubmissionStatus } from "@/types";
 import { determineSubmissionStatus, isDeadlinePassed } from "@/utils";
 
 export class SubmissionService {
@@ -38,7 +37,7 @@ export class SubmissionService {
     }
 
     const filesWithUrls = await Promise.all(
-      submission.files.map(async (file) => ({
+      submission.files.map(async (file: any) => ({
         ...file,
         url: await storage.getSignedDownloadUrl(file.fileKey),
       })),
@@ -74,8 +73,8 @@ export class SubmissionService {
 
     const inputFieldIds = new Set(
       form.fields
-        .filter((f) => !["HEADING", "DIVIDER"].includes(f.type))
-        .map((f) => f.id),
+        .filter((f: any) => !["HEADING", "DIVIDER"].includes(f.type))
+        .map((f: any) => f.id),
     );
 
     for (const field of form.fields) {
@@ -104,7 +103,7 @@ export class SubmissionService {
 
     if (data.files?.length) {
       const filesWithUrls = await Promise.all(
-        submission.files.map(async (file) => ({
+        submission.files.map(async (file: any) => ({
           ...file,
           url: storage.getPublicUrl(file.fileKey),
         })),
@@ -136,7 +135,7 @@ export class SubmissionService {
       throw new ValidationError("formId or slug is required");
     }
 
-    const whereClause: Prisma.SubmissionWhereInput = {
+    const whereClause: any = {
       email,
       deletedAt: null,
     };
@@ -172,7 +171,7 @@ export class SubmissionService {
     }
 
     const filesWithUrls = await Promise.all(
-      submission.files.map(async (file) => ({
+      submission.files.map(async (file: any) => ({
         ...file,
         url: await storage.getSignedDownloadUrl(file.fileKey),
       })),
@@ -224,8 +223,8 @@ export class SubmissionService {
 
     const fullInputFieldIds = new Set(
       fullForm.fields
-        .filter((f) => !["HEADING", "DIVIDER"].includes(f.type))
-        .map((f) => f.id)
+        .filter((f: any) => !["HEADING", "DIVIDER"].includes(f.type))
+        .map((f: any) => f.id)
     );
 
     for (const field of fullForm.fields) {
@@ -251,7 +250,7 @@ export class SubmissionService {
     const status = determineSubmissionStatus(fullForm.deadline, fullForm.allowLate);
 
     // Run update in transaction
-    const updatedSubmission = await prisma.$transaction(async (tx) => {
+    const updatedSubmission = await prisma.$transaction(async (tx: any) => {
       // delete existing answers
       await tx.submissionAnswer.deleteMany({ where: { submissionId: id } });
       // create new answers
@@ -305,7 +304,7 @@ export class SubmissionService {
     });
 
     const filesWithUrls = await Promise.all(
-      updatedSubmission.files.map(async (file) => ({
+      updatedSubmission.files.map(async (file: any) => ({
         ...file,
         url: await storage.getSignedDownloadUrl(file.fileKey),
       })),
