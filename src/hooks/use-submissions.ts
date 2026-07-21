@@ -78,3 +78,21 @@ export function useStudentSubmission(params: { formId?: string; slug?: string })
     enabled,
   });
 }
+
+export function useUpdateStudentSubmission(submissionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: Record<string, unknown>) => {
+      const res = await apiFetch(`/api/student/submissions?id=${submissionId}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-submission"] });
+      queryClient.invalidateQueries({ queryKey: ["student-forms"] });
+      queryClient.invalidateQueries({ queryKey: ["submissions"] });
+    },
+  });
+}

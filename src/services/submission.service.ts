@@ -180,6 +180,139 @@ export class SubmissionService {
 
     return { ...submission, files: filesWithUrls };
   }
+
+  async updateStudentSubmission(
+    id: string,
+    email: string,
+    data: SubmitFormInput,
+  ) {
+    const submission = await prisma.submission.findFirst({
+      where: {
+        id,
+        email,
+        deletedAt: null,
+      },
+      include: {
+        form: true,
+      },
+    });
+
+    if (!submission) {
+      throw new NotFoundError("Submission not found");
+    }
+
+    const { form } = submission;
+
+    // Check if editing is allowed
+    // Allowed if: form.allowEdit is true OR the current submission status is "REVISION"
+    const canEdit = form.allowEdit || submission.status === "REVISION";
+    if (!canEdit) {
+      throw new ValidationError("Form ini tidak mengizinkan pengeditan jawaban");
+    }
+
+    // Check deadline constraints
+    if (form.deadline && isDeadlinePassed(form.deadline) && !form.allowLate) {
+      throw new ValidationError("Submission deadline has passed and late updates are not allowed");
+    }
+
+    // Validate required fields
+    // Let's get the full form details.
+    const fullForm = await formRepository.findById(form.id);
+    if (!fullForm) {
+      throw new NotFoundError("Form definition not found");
+    }
+
+    const fullInputFieldIds = new Set(
+      fullForm.fields
+        .filter((f) => !["HEADING", "DIVIDER"].includes(f.type))
+        .map((f) => f.id)
+    );
+
+    for (const field of fullForm.fields) {
+      if (field.required && !["HEADING", "DIVIDER"].includes(field.type)) {
+        const answer = data.answers.find((a) => a.fieldId === field.id);
+        const file = data.files?.find((f) => f.fieldId === field.id);
+        const hasValue =
+          (answer?.value && answer.value.trim()) ||
+          (answer?.values && answer.values.length > 0) ||
+          file;
+        if (!hasValue) {
+          throw new ValidationError(`Field "${field.label}" is required`);
+        }
+      }
+    }
+
+    for (const answer of data.answers) {
+      if (!fullInputFieldIds.has(answer.fieldId)) {
+        throw new ValidationError(`Invalid field: ${answer.fieldId}`);
+      }
+    }
+
+    const status = determineSubmissionStatus(fullForm.deadline, fullForm.allowLate);
+
+    // Run update in transaction
+    const updatedSubmission = await prisma.$transaction(async (tx) => {
+      // delete existing answers
+      await tx.submissionAnswer.deleteMany({ where: { submissionId: id } });
+      // create new answers
+      if (data.answers.length > 0) {
+        await tx.submissionAnswer.createMany({
+          data: data.answers.map((answer) => ({
+            submissionId: id,
+            fieldId: answer.fieldId,
+            value: answer.value,
+            values: answer.values ?? [],
+          })),
+        });
+      }
+
+      // delete existing files
+      await tx.submissionFile.deleteMany({ where: { submissionId: id } });
+      // create new files
+      if (data.files && data.files.length > 0) {
+        await tx.submissionFile.createMany({
+          data: data.files.map((file) => ({
+            submissionId: id,
+            fieldId: file.fieldId,
+            fileName: file.fileName,
+            fileKey: file.fileKey,
+            mimeType: file.mimeType,
+            fileSize: file.fileSize,
+          })),
+        });
+      }
+
+      return tx.submission.update({
+        where: { id },
+        data: {
+          status,
+          updatedAt: new Date(),
+        },
+        include: {
+          answers: {
+            include: {
+              field: {
+                select: { label: true, type: true },
+              },
+            },
+          },
+          files: true,
+          form: {
+            select: { title: true, slug: true },
+          },
+        },
+      });
+    });
+
+    const filesWithUrls = await Promise.all(
+      updatedSubmission.files.map(async (file) => ({
+        ...file,
+        url: await storage.getSignedDownloadUrl(file.fileKey),
+      })),
+    );
+
+    return { ...updatedSubmission, files: filesWithUrls };
+  }
 }
 
 export const submissionService = new SubmissionService();

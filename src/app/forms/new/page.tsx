@@ -195,6 +195,18 @@ export default function NewFormPage() {
 
                 <div className="flex items-center justify-between border-t pt-3">
                   <div className="space-y-0.5">
+                    <Label htmlFor="allow-edit">Allow Editing Submissions</Label>
+                    <p className="text-xs text-muted-foreground">Students can edit their submitted responses</p>
+                  </div>
+                  <Switch
+                    id="allow-edit"
+                    checked={allowEdit}
+                    onCheckedChange={setAllowEdit}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between border-t pt-3">
+                  <div className="space-y-0.5">
                     <Label htmlFor="collect-email">Require Email Address</Label>
                     <p className="text-xs text-muted-foreground">Students must specify their email</p>
                   </div>

@@ -66,6 +66,7 @@ export default function FormDetailPage({ params }: PageProps) {
     setDescription,
     setDeadline,
     setAllowLate,
+    setAllowEdit,
     setMaxSubmissions,
     setCollectEmail,
     setSuccessTitle,
@@ -388,6 +389,18 @@ export default function FormDetailPage({ params }: PageProps) {
                     id="allow-late"
                     checked={allowLate}
                     onCheckedChange={setAllowLate}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between border-t pt-3">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="allow-edit">Allow Editing Submissions</Label>
+                    <p className="text-xs text-muted-foreground">Students can edit their submitted responses</p>
+                  </div>
+                  <Switch
+                    id="allow-edit"
+                    checked={allowEdit}
+                    onCheckedChange={setAllowEdit}
                   />
                 </div>
 

@@ -29,7 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { usePublicForm, useSubmitForm } from "@/hooks/use-forms";
-import { useStudentSubmission } from "@/hooks/use-submissions";
+import { useStudentSubmission, useUpdateStudentSubmission } from "@/hooks/use-submissions";
 import { useSession } from "@/lib/auth-client";
 import type { FormFieldWithOptions, FormFieldOptionItem, SubmissionAnswerItem, SubmissionFileItem } from "@/types";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -69,12 +69,48 @@ export default function PublicFormPage({ params }: PageProps) {
   
   // UI States
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [uploadingFieldId, setUploadingFieldId] = useState<string | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(true);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
+  const updateSubmissionMutation = useUpdateStudentSubmission(studentSubmission?.id || "");
+
+  const canEdit =
+    !!studentSubmission &&
+    !!form &&
+    (form.allowEdit || studentSubmission.status === "REVISION") &&
+    !["COMPLETED", "REVIEWED"].includes(studentSubmission.status);
+
+  const handleStartEdit = () => {
+    if (!studentSubmission || !form) return;
+
+    const initialAnswers: typeof answers = {};
+    const initialFiles: typeof files = {};
+
+    form.fields.forEach((field) => {
+      const ans = studentSubmission.answers.find((a: any) => a.fieldId === field.id);
+      if (ans) {
+        initialAnswers[field.id] = { value: ans.value || undefined, values: ans.values || [] };
+      }
+      const file = studentSubmission.files.find((f: any) => f.fieldId === field.id);
+      if (file) {
+        initialFiles[field.id] = {
+          fileKey: file.fileKey,
+          fileName: file.fileName,
+          mimeType: file.mimeType,
+          fileSize: file.fileSize
+        };
+      }
+    });
+
+    setAnswers(initialAnswers);
+    setFiles(initialFiles);
+    setIsEditing(true);
+  };
+
   const isDeadlinePassed = form?.deadline ? new Date() > new Date(form.deadline) : false;
-  const isClosed = isDeadlinePassed && !form?.allowLate;
+  const isClosed = isDeadlinePassed && !form?.allowLate && studentSubmission?.status !== "REVISION";
 
   // Set default values when form loads
   useState(() => {
@@ -224,12 +260,18 @@ export default function PublicFormPage({ params }: PageProps) {
         files: formattedFiles
       };
 
-      await submitFormMutation.mutateAsync(payload);
-      setIsSubmitted(true);
-      toast.success("Jawaban berhasil dikumpulkan!");
+      if (isEditing) {
+        await updateSubmissionMutation.mutateAsync(payload);
+        setIsEditing(false);
+        toast.success("Jawaban berhasil diperbarui!");
+      } else {
+        await submitFormMutation.mutateAsync(payload);
+        setIsSubmitted(true);
+        toast.success("Jawaban berhasil dikumpulkan!");
+      }
     } catch (err) {
       const error = err as Error;
-      toast.error(error.message || "Gagal mengumpulkan jawaban");
+      toast.error(error.message || "Gagal menyimpan jawaban");
     }
   };
 
@@ -277,7 +319,7 @@ export default function PublicFormPage({ params }: PageProps) {
     );
   }
 
-  if (studentSubmission) {
+  if (studentSubmission && !isEditing) {
     return (
       <>
         <div className="fixed top-4 right-4 z-50">
@@ -423,12 +465,17 @@ export default function PublicFormPage({ params }: PageProps) {
             })}
           </div>
 
-          <div className="text-center pt-4">
-            <Link href="/dashboard">
-              <Button variant="outline" className="w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+            <Link href="/dashboard" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full">
                 Kembali ke Dashboard
               </Button>
             </Link>
+            {canEdit && (
+              <Button onClick={handleStartEdit} className="w-full sm:w-auto gap-2">
+                Edit Jawaban
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -485,6 +532,21 @@ export default function PublicFormPage({ params }: PageProps) {
                 onClick={() => setShowLoginPrompt(false)}
               >
                 Lanjutkan Tanpa Login
+              </Button>
+            </div>
+          </Alert>
+        )}
+
+        {isEditing && (
+          <Alert className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/50">
+            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertTitle className="font-semibold text-blue-850 dark:text-blue-400">Mode Edit Jawaban</AlertTitle>
+            <AlertDescription className="text-sm mt-1">
+              Anda sedang mengedit jawaban yang sudah dikumpulkan sebelumnya. Klik <strong>Simpan Perubahan</strong> untuk memperbarui atau <strong>Batal</strong> untuk membatalkan perubahan.
+            </AlertDescription>
+            <div className="mt-3">
+              <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
+                Batal
               </Button>
             </div>
           </Alert>
@@ -739,14 +801,14 @@ export default function PublicFormPage({ params }: PageProps) {
           <Button
             type="submit"
             className="w-full h-12 text-base font-semibold"
-            disabled={isClosed || submitFormMutation.isPending}
+            disabled={isClosed || submitFormMutation.isPending || updateSubmissionMutation.isPending}
           >
-            {submitFormMutation.isPending ? (
+            {submitFormMutation.isPending || updateSubmissionMutation.isPending ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Mengirim...
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> {isEditing ? "Menyimpan..." : "Mengirim..."}
               </>
             ) : (
-              "Kirim Jawaban"
+              isEditing ? "Simpan Perubahan" : "Kirim Jawaban"
             )}
           </Button>
         </form>
@@ -755,29 +817,31 @@ export default function PublicFormPage({ params }: PageProps) {
         <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
           <DialogContent className="max-w-sm">
             <DialogHeader>
-              <DialogTitle>Konfirmasi Pengumpulan</DialogTitle>
+              <DialogTitle>{isEditing ? "Konfirmasi Perubahan" : "Konfirmasi Pengumpulan"}</DialogTitle>
               <DialogDescription>
-                Apakah Anda yakin ingin mengumpulkan jawaban ini? Pastikan semua jawaban sudah benar sebelum mengirim.
+                {isEditing
+                  ? "Apakah Anda yakin ingin memperbarui jawaban Anda? Perubahan akan langsung disimpan."
+                  : "Apakah Anda yakin ingin mengumpulkan jawaban ini? Pastikan semua jawaban sudah benar sebelum mengirim."}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button
                 variant="outline"
                 onClick={() => setShowConfirmDialog(false)}
-                disabled={submitFormMutation.isPending}
+                disabled={submitFormMutation.isPending || updateSubmissionMutation.isPending}
                 className="w-full sm:w-auto"
               >
                 Batal
               </Button>
               <Button
                 onClick={handleConfirmedSubmit}
-                disabled={submitFormMutation.isPending}
+                disabled={submitFormMutation.isPending || updateSubmissionMutation.isPending}
                 className="w-full sm:w-auto"
               >
-                {submitFormMutation.isPending ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Mengirim...</>
+                {submitFormMutation.isPending || updateSubmissionMutation.isPending ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {isEditing ? "Menyimpan..." : "Mengirim..."}</>
                 ) : (
-                  "Ya, Kirim Sekarang"
+                  isEditing ? "Ya, Simpan Perubahan" : "Ya, Kirim Sekarang"
                 )}
               </Button>
             </DialogFooter>
