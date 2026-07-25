@@ -10,11 +10,62 @@ import {
   Loader2,
   Lock,
   Info,
-  MessageSquare
+  MessageSquare,
+  ExternalLink
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import Link from "next/link";
+
+function renderClickableContent(value: string | null, values?: string[]) {
+  const text = value || values?.join(", ");
+  if (!text || !text.trim()) {
+    return <span className="text-muted-foreground italic">Tidak ada jawaban</span>;
+  }
+
+  const trimmed = text.trim();
+  const isUrl = /^https?:\/\/[^\s]+$/i.test(trimmed) || /^(github\.com|vercel\.app|github\.io)\/[^\s]+$/i.test(trimmed);
+
+  if (isUrl) {
+    const href = trimmed.startsWith("http://") || trimmed.startsWith("https://") ? trimmed : `https://${trimmed}`;
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 dark:text-blue-400 font-semibold hover:underline inline-flex items-center gap-1.5 break-all underline-offset-2"
+      >
+        {trimmed}
+        <ExternalLink className="h-3.5 w-3.5 shrink-0 inline" />
+      </a>
+    );
+  }
+
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return (
+    <span className="whitespace-pre-wrap break-words">
+      {parts.map((part, idx) => {
+        if (/^https?:\/\/[^\s]+$/i.test(part)) {
+          return (
+            <a
+              key={idx}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 dark:text-blue-400 font-semibold hover:underline inline-flex items-center gap-1 break-all underline-offset-2 mx-0.5"
+            >
+              {part}
+              <ExternalLink className="h-3 w-3 shrink-0 inline" />
+            </a>
+          );
+        }
+        return part;
+      })}
+    </span>
+  );
+}
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -410,9 +461,9 @@ export default function PublicFormPage({ params }: PageProps) {
                   <CardContent className="text-sm">
                     {/* Render Text / Short text / Paragraph / Select */}
                     {answer?.value && !["RADIO", "CHECKBOX", "DROPDOWN", "FILE_UPLOAD", "IMAGE_UPLOAD"].includes(field.type) && (
-                      <p className="p-3 border rounded-lg bg-zinc-50/50 dark:bg-zinc-900/20 whitespace-pre-wrap">
-                        {answer.value}
-                      </p>
+                      <div className="p-3 border rounded-lg bg-zinc-50/50 dark:bg-zinc-900/20 whitespace-pre-wrap">
+                        {renderClickableContent(answer.value)}
+                      </div>
                     )}
 
                     {/* Dropdown / Radio */}
