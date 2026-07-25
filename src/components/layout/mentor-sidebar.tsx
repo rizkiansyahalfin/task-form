@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, LayoutDashboard, LogOut, Settings } from "lucide-react";
+import { FileText, LayoutDashboard, LogOut, Settings, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth-client";
@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 const navItems = [
   { href: "/dashboard", label: "Dasbor", icon: LayoutDashboard },
   { href: "/forms", label: "Formulir", icon: FileText },
+  { href: "/students", label: "Data Santri", icon: Users },
   { href: "/settings", label: "Pengaturan", icon: Settings },
 ];
 
