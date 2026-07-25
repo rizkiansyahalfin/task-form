@@ -335,7 +335,7 @@ ${liveLink}`;
 
         {/* WhatsApp Broadcast Generator Modal */}
         <Dialog open={showWaModal} onOpenChange={setShowWaModal}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="sm:max-w-xl">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                 <MessageCircle className="h-5 w-5" /> Bagikan Pengingat ke WA Group

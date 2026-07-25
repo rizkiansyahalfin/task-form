@@ -400,7 +400,7 @@ function SubmissionsContent() {
 
         {/* Submission Details Modal */}
         <Dialog open={!!selectedSubId} onOpenChange={(open) => !open && setSelectedSubId(null)}>
-          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-3xl md:max-w-4xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
                 <span>Tinjau & Beri Feedback</span>
