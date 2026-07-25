@@ -15,11 +15,13 @@ import {
   Search,
   BookOpen,
   ArrowRight,
-  Eye
+  Eye,
+  MessageCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format, differenceInHours } from "date-fns";
+import { toast } from "sonner";
 import type { StudentFormWithStatus } from "@/types";
 
 import { MentorLayout } from "@/components/layout/mentor-layout";
@@ -499,17 +501,34 @@ function StudentDashboard({ name }: StudentDashboardProps) {
                         )}
                       </div>
 
-                      <Link href={`/public/form/${form.slug}`} target="_blank" className="block w-full">
+                      <div className="flex items-center gap-2 mt-2">
+                        <Link href={`/public/form/${form.slug}`} target="_blank" className="flex-1">
+                          <Button
+                            className="w-full gap-1.5 justify-center group text-sm font-semibold"
+                            variant={form.hasSubmitted ? "outline" : isClosed ? "outline" : "default"}
+                            disabled={isClosed && !form.hasSubmitted}
+                          >
+                            {form.hasSubmitted ? "Lihat Pengumpulan" : isClosed ? "Pengumpulan Ditutup" : "Mulai Mengerjakan"}
+                            {!isClosed && !form.hasSubmitted && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                            {form.hasSubmitted && <Eye className="h-4 w-4 transition-transform group-hover:scale-110" />}
+                          </Button>
+                        </Link>
                         <Button
-                          className="w-full gap-1.5 justify-center mt-2 group text-sm font-semibold"
-                          variant={form.hasSubmitted ? "outline" : isClosed ? "outline" : "default"}
-                          disabled={isClosed && !form.hasSubmitted}
+                          variant="outline"
+                          size="icon"
+                          className="h-9 w-9 shrink-0 text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:border-emerald-950 dark:hover:bg-emerald-950/30"
+                          title="Salin pengingat tugas ke WA Group"
+                          onClick={() => {
+                            const deadlineText = form.deadline ? format(new Date(form.deadline), "PPp") : "Tanpa Tenggat Waktu";
+                            const liveLink = typeof window !== "undefined" ? `${window.location.origin}/public/form/${form.slug}` : `/public/form/${form.slug}`;
+                            const text = `📢 *PENGINGAT TUGAS CLASS* 📢\n\n📌 *Tugas:* ${form.title}\n⏰ *Tenggat Waktu:* ${deadlineText}\n\n👉 *Silakan kumpulkan tugas melalui link berikut:*\n${liveLink}`;
+                            navigator.clipboard.writeText(text);
+                            toast.success("Format pengingat WA disalin! Siap ditempel ke Grup WA.");
+                          }}
                         >
-                          {form.hasSubmitted ? "Lihat Pengumpulan" : isClosed ? "Pengumpulan Ditutup" : "Mulai Mengerjakan"}
-                          {!isClosed && !form.hasSubmitted && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
-                          {form.hasSubmitted && <Eye className="h-4 w-4 transition-transform group-hover:scale-110" />}
+                          <MessageCircle className="h-4 w-4" />
                         </Button>
-                      </Link>
+                      </div>
                     </CardContent>
                   </Card>
                 );

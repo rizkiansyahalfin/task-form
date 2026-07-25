@@ -9,15 +9,22 @@ import {
   Loader2,
   Users,
   ExternalLink,
-  ClipboardList
+  ClipboardList,
+  MessageCircle,
+  Copy,
+  Send,
+  Check
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { toast } from "sonner";
 
 import { MentorLayout } from "@/components/layout/mentor-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useForm, useFormProgress } from "@/hooks/use-forms";
 import { formatDate } from "@/utils";
@@ -34,6 +41,8 @@ export default function FormProgressPage({ params }: PageProps) {
   
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "submitted" | "unsubmitted">("all");
+  const [showWaModal, setShowWaModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const isLoading = isFormLoading || isProgressLoading;
 
@@ -51,13 +60,13 @@ export default function FormProgressPage({ params }: PageProps) {
     return (
       <MentorLayout>
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <h2 className="text-2xl font-bold">Form Not Found</h2>
+          <h2 className="text-2xl font-bold">Form Tidak Ditemukan</h2>
           <p className="text-muted-foreground mt-2">
-            The form progress details could not be loaded.
+            Detail progress pengumpulan formulir tidak dapat dimuat.
           </p>
           <Link href="/forms" className="mt-4">
             <Button variant="outline" className="gap-2">
-              <ArrowLeft className="h-4 w-4" /> Back to Forms
+              <ArrowLeft className="h-4 w-4" /> Kembali ke Formulir
             </Button>
           </Link>
         </div>
@@ -68,6 +77,38 @@ export default function FormProgressPage({ params }: PageProps) {
   const { totalStudents, submittedCount, progress } = progressData;
   const unsubmittedCount = totalStudents - submittedCount;
   const submissionRate = totalStudents > 0 ? Math.round((submittedCount / totalStudents) * 100) : 0;
+  const unsubmittedStudents = progress.filter((p) => !p.hasSubmitted);
+
+  // Generate WA Broadcast message
+  const deadlineText = form.deadline ? formatDate(form.deadline) : "Tanpa Tenggat Waktu";
+  const liveLink = typeof window !== "undefined"
+    ? `${window.location.origin}/public/form/${form.slug}`
+    : `/public/form/${form.slug}`;
+
+  const waMessage = `📢 *PENGINGAT TUGAS TASKFORM* 📢
+
+📌 *Tugas:* ${form.title}
+⏰ *Tenggat Waktu:* ${deadlineText}
+
+❌ *Belum Mengumpulkan (${unsubmittedStudents.length} Santri):*
+${unsubmittedStudents.map((s, idx) => `${idx + 1}. ${s.name}`).join("\n") || "(Semua santri sudah mengumpulkan! 🎉)"}
+
+✅ *Sudah Mengumpulkan:* ${submittedCount} dari ${totalStudents} Santri (${submissionRate}%)
+
+👉 *Klik link berikut untuk mengumpulkan tugas:*
+${liveLink}`;
+
+  const handleCopyWaText = () => {
+    navigator.clipboard.writeText(waMessage);
+    setCopied(true);
+    toast.success("Pesan pengingat WA berhasil disalin ke clipboard!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleOpenWhatsApp = () => {
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(waMessage)}`;
+    window.open(waUrl, "_blank");
+  };
 
   // Filter progress items
   const filteredProgress = progress.filter((item) => {
@@ -93,15 +134,15 @@ export default function FormProgressPage({ params }: PageProps) {
 
     switch (item.submissionStatus) {
       case "COMPLETED":
-        return <Badge className="bg-green-100 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-300">Completed</Badge>;
+        return <Badge className="bg-green-100 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-300">Selesai</Badge>;
       case "REVIEWED":
-        return <Badge className="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300">Reviewed</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300">Ditinjau</Badge>;
       case "REVISION":
-        return <Badge className="bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300">Revision</Badge>;
+        return <Badge className="bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300">Perlu Revisi</Badge>;
       case "LATE":
-        return <Badge variant="destructive">Late</Badge>;
+        return <Badge variant="destructive">Terlambat</Badge>;
       default:
-        return <Badge variant="secondary">Submitted</Badge>;
+        return <Badge variant="secondary">Sudah Mengumpulkan</Badge>;
     }
   };
 
@@ -118,7 +159,7 @@ export default function FormProgressPage({ params }: PageProps) {
             </Link>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight">Progress Pengumpulan</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Progress Pengumpulkan</h1>
                 <Badge variant="outline" className="text-xs">
                   {form.status.toLowerCase()}
                 </Badge>
@@ -128,7 +169,13 @@ export default function FormProgressPage({ params }: PageProps) {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+              onClick={() => setShowWaModal(true)}
+            >
+              <MessageCircle className="h-4 w-4" /> Bagikan ke WA Group
+            </Button>
             <Link href={`/public/form/${form.slug}`} target="_blank">
               <Button variant="outline" size="sm" className="gap-1.5 text-blue-600 dark:text-blue-400">
                 <ExternalLink className="h-4 w-4" /> Live Form
@@ -285,6 +332,50 @@ export default function FormProgressPage({ params }: PageProps) {
             )}
           </CardContent>
         </Card>
+
+        {/* WhatsApp Broadcast Generator Modal */}
+        <Dialog open={showWaModal} onOpenChange={setShowWaModal}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                <MessageCircle className="h-5 w-5" /> Bagikan Pengingat ke WA Group
+              </DialogTitle>
+              <DialogDescription>
+                Pesan ini dibuat otomatis berisi daftar santri yang belum mengumpulkan tugas beserta link formulir.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3 py-2">
+              <label className="text-xs font-semibold text-muted-foreground">
+                Pratinjau Format Pesan WhatsApp:
+              </label>
+              <Textarea
+                readOnly
+                value={waMessage}
+                rows={10}
+                className="font-mono text-xs bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50 focus-visible:ring-emerald-500"
+              />
+            </div>
+
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto gap-1.5 text-xs"
+                onClick={handleCopyWaText}
+              >
+                {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                {copied ? "Tersalin!" : "Salin Teks"}
+              </Button>
+
+              <Button
+                className="w-full sm:w-auto gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                onClick={handleOpenWhatsApp}
+              >
+                <Send className="h-4 w-4" /> Buka WhatsApp (Direct Share)
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </MentorLayout>
   );
