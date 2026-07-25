@@ -84,16 +84,20 @@ export class FormService {
     // Fetch submissions for this form and these students
     const submissions = await submissionRepository.findByFormAndEmails(formId, emails);
 
-    // Map student email to their latest submission
+    // Map student email to their latest submission (using normalized lowercase keys)
     const submissionMap = new Map<string, typeof submissions[0]>();
     for (const sub of submissions) {
-      if (sub.email && !submissionMap.has(sub.email)) {
-        submissionMap.set(sub.email, sub);
+      if (sub.email) {
+        const key = sub.email.trim().toLowerCase();
+        if (!submissionMap.has(key)) {
+          submissionMap.set(key, sub);
+        }
       }
     }
 
     const progress = students.map((student) => {
-      const sub = student.email ? submissionMap.get(student.email) : null;
+      const studentKey = student.email ? student.email.trim().toLowerCase() : "";
+      const sub = studentKey ? submissionMap.get(studentKey) : null;
       return {
         id: student.id,
         name: student.name,

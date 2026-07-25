@@ -51,6 +51,10 @@ export class SubmissionService {
     data: SubmitFormInput,
     meta?: { ipAddress?: string; userAgent?: string },
   ) {
+    if (data.email) {
+      data.email = data.email.trim().toLowerCase();
+    }
+
     const form = await formRepository.findBySlug(slug);
     if (!form) {
       throw new NotFoundError("Form not found or not published");
@@ -158,8 +162,10 @@ export class SubmissionService {
       throw new ValidationError("formId or slug is required");
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     const whereClause: any = {
-      email,
+      email: { equals: normalizedEmail, mode: "insensitive" },
       deletedAt: null,
     };
 
@@ -208,10 +214,12 @@ export class SubmissionService {
     email: string,
     data: SubmitFormInput,
   ) {
+    const normalizedEmail = email.trim().toLowerCase();
+
     const submission = await prisma.submission.findFirst({
       where: {
         id,
-        email,
+        email: { equals: normalizedEmail, mode: "insensitive" },
         deletedAt: null,
       },
       include: {

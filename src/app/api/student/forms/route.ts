@@ -25,10 +25,11 @@ export async function GET(request: NextRequest) {
 
     // Fetch submissions for this student and these forms
     const formIds = items.map((f) => f.id);
+    const normalizedUserEmail = user.email.trim().toLowerCase();
     const submissions = formIds.length > 0 ? await prisma.submission.findMany({
       where: {
         formId: { in: formIds },
-        email: user.email,
+        email: { equals: normalizedUserEmail, mode: "insensitive" },
         deletedAt: null,
       },
       select: {

@@ -21,7 +21,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { getSession } = await import("@/server/auth");
     const session = await getSession();
     if (session?.user?.email) {
-      data.email = session.user.email;
+      data.email = session.user.email.trim().toLowerCase();
+    } else if (data.email) {
+      data.email = data.email.trim().toLowerCase();
     }
 
     const submission = await submissionService.submitForm(slug, data, {

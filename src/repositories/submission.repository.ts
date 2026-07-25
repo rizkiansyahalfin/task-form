@@ -211,13 +211,16 @@ export class SubmissionRepository {
   }
 
   async findByFormAndEmails(formId: string, emails: string[]) {
+    const validEmails = emails.map((e) => e.trim().toLowerCase()).filter(Boolean);
+    if (validEmails.length === 0) return [];
+
     return prisma.submission.findMany({
       where: {
         formId,
         deletedAt: null,
-        email: {
-          in: emails,
-        },
+        OR: validEmails.map((email) => ({
+          email: { equals: email, mode: "insensitive" },
+        })),
       },
       select: {
         id: true,
