@@ -62,6 +62,57 @@ export function useDeleteSubmission() {
   });
 }
 
+export function useUpdateSubmissionFeedback() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ submissionId, feedbacks }: { submissionId: string; feedbacks: Record<string, string> }) => {
+      const res = await apiFetch<SubmissionWithAnswers>(`/api/submissions/${submissionId}/feedback`, {
+        method: "PATCH",
+        body: JSON.stringify({ feedbacks }),
+      });
+      return res.data!;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["submissions"] });
+      queryClient.invalidateQueries({ queryKey: ["submissions", variables.submissionId] });
+    },
+  });
+}
+
+export function useBulkUpdateSubmissionStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ submissionIds, status }: { submissionIds: string[]; status: SubmissionStatus }) => {
+      const res = await apiFetch(`/api/submissions/bulk`, {
+        method: "PATCH",
+        body: JSON.stringify({ submissionIds, status }),
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["submissions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useBulkDeleteSubmissions() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (submissionIds: string[]) => {
+      const res = await apiFetch(`/api/submissions/bulk`, {
+        method: "DELETE",
+        body: JSON.stringify({ submissionIds }),
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["submissions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
 export function useStudentSubmission(params: { formId?: string; slug?: string }) {
   const searchParams = new URLSearchParams();
   if (params.formId) searchParams.set("formId", params.formId);

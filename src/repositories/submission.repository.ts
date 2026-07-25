@@ -116,6 +116,55 @@ export class SubmissionRepository {
     });
   }
 
+  async bulkUpdateStatus(ids: string[], mentorId: string, status: SubmissionStatus) {
+    return prisma.submission.updateMany({
+      where: {
+        id: { in: ids },
+        form: { mentorId, deletedAt: null },
+        deletedAt: null,
+      },
+      data: { status },
+    });
+  }
+
+  async bulkSoftDelete(ids: string[], mentorId: string) {
+    return prisma.submission.updateMany({
+      where: {
+        id: { in: ids },
+        form: { mentorId, deletedAt: null },
+        deletedAt: null,
+      },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  async updateAnswerFeedback(answerId: string, feedback: string) {
+    return prisma.submissionAnswer.update({
+      where: { id: answerId },
+      data: { feedback } as Prisma.SubmissionAnswerUncheckedUpdateInput,
+    });
+  }
+
+  async updateSubmissionAnswersFeedback(submissionId: string, feedbackMap: Record<string, string>) {
+    const updatePromises = Object.entries(feedbackMap).map(([answerId, feedback]) =>
+      prisma.submissionAnswer.updateMany({
+        where: {
+          id: answerId,
+          submissionId,
+        },
+        data: { feedback } as Prisma.SubmissionAnswerUncheckedUpdateManyInput,
+      })
+    );
+    return Promise.all(updatePromises);
+  }
+
+  async softDelete(id: string) {
+    return prisma.submission.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+  }
+
   async countByMentor(mentorId: string) {
     return prisma.submission.count({
       where: { form: { mentorId, deletedAt: null }, deletedAt: null },
@@ -179,13 +228,6 @@ export class SubmissionRepository {
       orderBy: {
         submittedAt: "desc",
       },
-    });
-  }
-
-  async softDelete(id: string) {
-    return prisma.submission.update({
-      where: { id },
-      data: { deletedAt: new Date() },
     });
   }
 }

@@ -9,7 +9,8 @@ import {
   FileCheck,
   Loader2,
   Lock,
-  Info
+  Info,
+  MessageSquare
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -459,6 +460,16 @@ export default function PublicFormPage({ params }: PageProps) {
                     {!answer?.value && (!answer?.values || answer.values.length === 0) && answerFiles.length === 0 && (
                       <p className="text-xs text-muted-foreground italic">Tidak ada jawaban.</p>
                     )}
+
+                    {/* Mentor Feedback Banner */}
+                    {answer?.feedback && (
+                      <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-300">
+                        <p className="font-semibold flex items-center gap-1.5 mb-1 text-amber-800 dark:text-amber-400">
+                          <MessageSquare className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" /> Catatan Feedback Mentor:
+                        </p>
+                        <p className="leading-relaxed whitespace-pre-wrap">{answer.feedback}</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -784,17 +795,30 @@ export default function PublicFormPage({ params }: PageProps) {
                               <p className="text-sm font-medium text-primary hover:underline">
                                 Klik untuk mengunggah file
                               </p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {field.type === "IMAGE_UPLOAD" ? "Hanya gambar" : "Semua tipe file diizinkan"} (Maks 10MB)
-                              </p>
                             </div>
                           )}
                         </div>
                       )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+
+                    {/* Display Mentor Feedback in Edit mode */}
+                    {isEditing && studentSubmission && (() => {
+                      const prevAns = studentSubmission.answers.find((a: any) => a.fieldId === field.id);
+                      if (prevAns?.feedback) {
+                        return (
+                          <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-300">
+                            <p className="font-semibold flex items-center gap-1.5 mb-1 text-amber-800 dark:text-amber-400">
+                              <MessageSquare className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" /> Catatan Feedback Mentor:
+                            </p>
+                            <p className="leading-relaxed whitespace-pre-wrap">{prevAns.feedback}</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </CardContent>
+                </Card>
             );
           })}
 

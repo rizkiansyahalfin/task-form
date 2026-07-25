@@ -104,10 +104,24 @@ export interface SubmissionAnswerItem {
   fieldId: string;
   value: string | null;
   values: string[];
+  feedback?: string | null;
   field?: {
     label: string;
     type: FieldType;
   };
+}
+
+export interface UpdateAnswerFeedbackInput {
+  feedbacks: Record<string, string>; // answerId -> feedback text mapping
+}
+
+export interface BulkUpdateStatusInput {
+  submissionIds: string[];
+  status: SubmissionStatus;
+}
+
+export interface BulkDeleteSubmissionsInput {
+  submissionIds: string[];
 }
 
 export interface SubmissionFileItem {

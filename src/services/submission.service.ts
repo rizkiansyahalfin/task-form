@@ -122,6 +122,29 @@ export class SubmissionService {
     return submissionRepository.updateStatus(id, status);
   }
 
+  async bulkUpdateStatus(ids: string[], mentorId: string, status: SubmissionStatus) {
+    if (!ids || ids.length === 0) {
+      throw new ValidationError("Submission IDs are required");
+    }
+    return submissionRepository.bulkUpdateStatus(ids, mentorId, status);
+  }
+
+  async bulkDeleteSubmissions(ids: string[], mentorId: string) {
+    if (!ids || ids.length === 0) {
+      throw new ValidationError("Submission IDs are required");
+    }
+    return submissionRepository.bulkSoftDelete(ids, mentorId);
+  }
+
+  async updateAnswerFeedback(submissionId: string, mentorId: string, feedbackMap: Record<string, string>) {
+    const submission = await submissionRepository.findById(submissionId, mentorId);
+    if (!submission) {
+      throw new NotFoundError("Submission not found");
+    }
+    await submissionRepository.updateSubmissionAnswersFeedback(submissionId, feedbackMap);
+    return this.getSubmission(submissionId, mentorId);
+  }
+
   async deleteSubmission(id: string, mentorId: string) {
     const submission = await submissionRepository.findById(id, mentorId);
     if (!submission) {

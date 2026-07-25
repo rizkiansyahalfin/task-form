@@ -210,6 +210,7 @@ model SubmissionAnswer {
   field        FormField  @relation(fields: [fieldId], references: [id])
   value        String?
   values       String[]   @default([])
+  feedback     String?
 
   @@index([submissionId])
   @@index([fieldId])
