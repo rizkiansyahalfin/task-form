@@ -13,7 +13,8 @@ import {
   ClipboardList,
   Edit,
   XCircle,
-  Users
+  Users,
+  MessageCircle
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -26,10 +27,12 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useForms, usePublishForm, useUnpublishForm, useDeleteForm } from "@/hooks/use-forms";
 import { Badge } from "@/components/ui/badge";
+import { RecapShareModal } from "@/components/forms/recap-share-modal";
 
 export default function FormsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [showRecapModal, setShowRecapModal] = useState(false);
 
   const { data: formsData, isLoading, refetch } = useForms({ page, search });
   const publishFormMutation = usePublishForm();
@@ -82,11 +85,20 @@ export default function FormsPage() {
               Kelola tugas dan tinjau formulir pengumpulan santri Anda.
             </p>
           </div>
-          <Link href="/forms/new">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" /> Buat Formulir Baru
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              className="gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900 dark:hover:bg-emerald-900/50 shadow-xs"
+              onClick={() => setShowRecapModal(true)}
+            >
+              <MessageCircle className="h-4 w-4" /> Rekap Progress WA
             </Button>
-          </Link>
+            <Link href="/forms/new">
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" /> Buat Formulir Baru
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Search & Actions */}
@@ -263,6 +275,7 @@ export default function FormsPage() {
           </div>
         )}
       </div>
+      <RecapShareModal open={showRecapModal} onOpenChange={setShowRecapModal} />
     </MentorLayout>
   );
 }

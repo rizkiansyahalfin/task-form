@@ -33,6 +33,7 @@ import { useSession, signOut } from "@/lib/auth-client";
 import { useDashboardStats, useForms, useStudentForms } from "@/hooks/use-forms";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { RecapShareModal } from "@/components/forms/recap-share-modal";
 
 export default function DashboardPage() {
   const { data: session, isPending } = useSession();
@@ -71,6 +72,7 @@ export default function DashboardPage() {
 function MentorDashboard() {
   const { data: stats, isLoading: isStatsLoading } = useDashboardStats();
   const { data: formsData, isLoading: isFormsLoading } = useForms({ limit: 5 });
+  const [showRecapModal, setShowRecapModal] = useState(false);
 
   const forms = formsData?.forms || [];
 
@@ -85,11 +87,20 @@ function MentorDashboard() {
               Ringkasan formulir dan pengumpulan tugas Anda.
             </p>
           </div>
-          <Link href="/forms/new">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" /> Buat Formulir
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              className="gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900 dark:hover:bg-emerald-900/50 shadow-xs"
+              onClick={() => setShowRecapModal(true)}
+            >
+              <MessageCircle className="h-4 w-4" /> Rekap Progress WA
             </Button>
-          </Link>
+            <Link href="/forms/new">
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" /> Buat Formulir
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -237,6 +248,7 @@ function MentorDashboard() {
           </Card>
         </div>
       </div>
+      <RecapShareModal open={showRecapModal} onOpenChange={setShowRecapModal} />
     </MentorLayout>
   );
 }

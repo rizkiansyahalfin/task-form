@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { apiFetch } from "@/lib/api-client";
-import type { DashboardStats, FormWithFields, PaginationMeta, FormProgressSummary, StudentFormWithStatus } from "@/types";
+import type { DashboardStats, FormWithFields, PaginationMeta, FormProgressSummary, StudentFormWithStatus, MultiFormProgressSummary } from "@/types";
 
 export function useDashboardStats() {
   return useQuery({
@@ -163,5 +163,16 @@ export function useFormProgress(formId: string) {
       return res.data!;
     },
     enabled: !!formId,
+  });
+}
+
+export function useMultiFormProgress(enabled = true) {
+  return useQuery({
+    queryKey: ["multi-form-progress"],
+    queryFn: async () => {
+      const res = await apiFetch<MultiFormProgressSummary>("/api/forms/recap-progress");
+      return res.data!;
+    },
+    enabled,
   });
 }

@@ -219,3 +219,39 @@ export interface StudentFormWithStatus extends FormWithFields {
   submittedAt: Date | null;
   submissionId: string | null;
 }
+
+export interface MultiFormProgressFormItem {
+  id: string;
+  title: string;
+  slug: string;
+  deadline: Date | null;
+  status: FormStatus;
+}
+
+export interface MultiFormStudentProgressItem {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  unsubmittedForms: {
+    formId: string;
+    formTitle: string;
+    formSlug: string;
+    deadline: Date | null;
+  }[];
+  submittedForms: {
+    formId: string;
+    formTitle: string;
+    formSlug: string;
+    submissionStatus: SubmissionStatus | null;
+    submittedAt: Date | null;
+  }[];
+  totalUnsubmitted: number;
+}
+
+export interface MultiFormProgressSummary {
+  forms: MultiFormProgressFormItem[];
+  totalStudents: number;
+  students: MultiFormStudentProgressItem[];
+}
+

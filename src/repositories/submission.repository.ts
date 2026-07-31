@@ -233,6 +233,31 @@ export class SubmissionRepository {
       },
     });
   }
+
+  async findByFormsAndEmails(formIds: string[], emails: string[]) {
+    const validEmails = emails.map((e) => e.trim().toLowerCase()).filter(Boolean);
+    if (formIds.length === 0 || validEmails.length === 0) return [];
+
+    return prisma.submission.findMany({
+      where: {
+        formId: { in: formIds },
+        deletedAt: null,
+        OR: validEmails.map((email) => ({
+          email: { equals: email, mode: "insensitive" },
+        })),
+      },
+      select: {
+        id: true,
+        formId: true,
+        email: true,
+        status: true,
+        submittedAt: true,
+      },
+      orderBy: {
+        submittedAt: "desc",
+      },
+    });
+  }
 }
 
 export const submissionRepository = new SubmissionRepository();

@@ -119,6 +119,102 @@ export class FormService {
       progress,
     };
   }
+
+  async getMultiFormProgress(mentorId: string) {
+    const formsResult = await formRepository.findPublished({
+      limit: 100,
+    });
+    const publishedForms = formsResult.items
+      .filter((f) => f.mentorId === mentorId)
+      .map((f) => ({
+        id: f.id,
+        title: f.title,
+        slug: f.slug,
+        deadline: f.deadline,
+        status: f.status,
+      }));
+
+    if (publishedForms.length === 0) {
+      return {
+        forms: [],
+        totalStudents: 0,
+        students: [],
+      };
+    }
+
+    const students = await formRepository.findAllStudents();
+    const emails = students.map((s) => s.email).filter(Boolean) as string[];
+
+    const formIds = publishedForms.map((f) => f.id);
+    const submissions = await submissionRepository.findByFormsAndEmails(formIds, emails);
+
+    const subMap = new Map<string, typeof submissions[0]>();
+    for (const sub of submissions) {
+      if (sub.email) {
+        const key = `${sub.email.trim().toLowerCase()}_${sub.formId}`;
+        if (!subMap.has(key)) {
+          subMap.set(key, sub);
+        }
+      }
+    }
+
+    const studentRecap = students.map((student) => {
+      const studentEmailKey = student.email ? student.email.trim().toLowerCase() : "";
+
+      const unsubmittedForms: {
+        formId: string;
+        formTitle: string;
+        formSlug: string;
+        deadline: Date | null;
+      }[] = [];
+
+      const submittedForms: {
+        formId: string;
+        formTitle: string;
+        formSlug: string;
+        submissionStatus: typeof submissions[0]["status"] | null;
+        submittedAt: Date | null;
+      }[] = [];
+
+      for (const form of publishedForms) {
+        const key = `${studentEmailKey}_${form.id}`;
+        const sub = studentEmailKey ? subMap.get(key) : null;
+
+        if (sub) {
+          submittedForms.push({
+            formId: form.id,
+            formTitle: form.title,
+            formSlug: form.slug,
+            submissionStatus: sub.status,
+            submittedAt: sub.submittedAt,
+          });
+        } else {
+          unsubmittedForms.push({
+            formId: form.id,
+            formTitle: form.title,
+            formSlug: form.slug,
+            deadline: form.deadline,
+          });
+        }
+      }
+
+      return {
+        id: student.id,
+        name: student.name,
+        email: student.email,
+        image: student.image,
+        unsubmittedForms,
+        submittedForms,
+        totalUnsubmitted: unsubmittedForms.length,
+      };
+    });
+
+    return {
+      forms: publishedForms,
+      totalStudents: students.length,
+      students: studentRecap,
+    };
+  }
 }
 
 export const formService = new FormService();
