@@ -1,14 +1,18 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, ShieldAlert } from "lucide-react";
+import { Loader2, Menu, ShieldAlert } from "lucide-react";
+import Link from "next/link";
 
 import { MentorSidebar } from "@/components/layout/mentor-sidebar";
 import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export function MentorLayout({ children }: { children: ReactNode }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { data: session, isPending } = useSession();
   const router = useRouter();
 
@@ -71,11 +75,51 @@ export function MentorLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <MentorSidebar />
-      <main className="flex-1 overflow-auto">
-        <div className="container mx-auto max-w-6xl p-6 md:p-8">{children}</div>
-      </main>
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+      {/* Mobile Top Header */}
+      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b bg-background/95 px-4 backdrop-blur-xs md:hidden">
+        <div className="flex items-center gap-3">
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger
+              render={
+                <Button variant="ghost" size="icon" aria-label="Buka menu navigasi">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              }
+            />
+            <SheetContent side="left" className="p-0 w-72 border-r bg-card">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Navigasi Mentor</SheetTitle>
+              </SheetHeader>
+              <MentorSidebar onNavClick={() => setMobileOpen(false)} />
+            </SheetContent>
+          </Sheet>
+
+          <Link href="/dashboard" className="flex items-center gap-2 font-bold tracking-tight">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground font-black text-xs">
+              TF
+            </div>
+            <span className="text-sm font-bold">TaskForm</span>
+          </Link>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+        </div>
+      </header>
+
+      {/* Desktop Sidebar (Fixed Left) */}
+      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-30 border-r bg-card">
+        <MentorSidebar />
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-h-screen md:pl-64">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 container mx-auto max-w-6xl overflow-x-hidden">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
+
